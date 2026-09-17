@@ -5,6 +5,7 @@ import '@/styles/components.css';
 import '@/styles/forms.css';
 import '@/styles/tables.css';
 import '@/styles/responsive.css';
+import '@/styles/elite-polish.css';
 import { validateEnv } from '@/lib/env/validation';
 import { CookieConsent } from '@/components/layout/CookieConsent';
 
