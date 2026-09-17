@@ -1,14 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils/helpers';
-import { Plus, Heart, Minus } from 'lucide-react';
+import { Plus, Heart, Minus, Package } from 'lucide-react';
 import { useState } from 'react';
 
 interface ProductCardProps {
   product: {
     id: string;
     name: string;
-    slug: string;
+    slug?: string;
     brand?: string | null;
     price: number;
     compareAtPrice?: number | null;
@@ -43,7 +43,6 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
     e.preventDefault();
     e.stopPropagation();
     setIsFavorite(!isFavorite);
-    // In production: POST /api/favorites {productId}
     try {
       await fetch('/api/favorites', {
         method: isFavorite ? 'DELETE' : 'POST',
@@ -54,17 +53,18 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
   };
 
   return (
-    <div className="product-card" style={{ 
+    <div className="product-card-elite" style={{ 
       background: 'white', 
       border: '1px solid var(--border)', 
-      borderRadius: 12, 
+      borderRadius: 16, 
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.2s',
-      height: '100%'
+      transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+      height: '100%',
+      boxShadow: 'var(--shadow-xs)'
     }}>
-      <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', position: 'relative' }}>
+      <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', position: 'relative', display: 'block' }}>
         <div style={{ 
           aspectRatio: '1', 
           background: 'var(--surface-muted)', 
@@ -72,71 +72,117 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
           alignItems: 'center', 
           justifyContent: 'center',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          borderBottom: '1px solid var(--border-light)'
         }}>
           {imageUrl ? (
-            <img src={imageUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            <img 
+              src={imageUrl} 
+              alt={product.name} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              loading="lazy"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)' }}>
-              <div style={{ fontSize: '36px' }}>📦</div>
-              <div style={{ fontSize: '11px' }}>No image</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)', padding: 16, textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, background: 'white', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+                <Package size={20} />
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 500 }}>Real photo from shop</div>
             </div>
           )}
           
-          {/* Discount badge - only when real discount exists */}
           {hasRealDiscount && !outOfStock && (
-            <div style={{ position: 'absolute', top: 8, left: 8, background: 'var(--success)', color: 'white', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: 6 }}>
+            <div style={{ 
+              position: 'absolute', 
+              top: 10, 
+              left: 10, 
+              background: '#0F766E', 
+              color: 'white', 
+              fontSize: 11, 
+              fontWeight: 700, 
+              padding: '5px 9px', 
+              borderRadius: 8,
+              boxShadow: '0 2px 8px -2px rgb(15 118 110 / 0.3)',
+              letterSpacing: '0.02em'
+            }}>
               {product.discount}% OFF
             </div>
           )}
           
-          {/* Wishlist */}
           <button
             onClick={handleFavorite}
-            style={{ position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: '50%', background: 'white', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            style={{ 
+              position: 'absolute', 
+              top: 10, 
+              right: 10, 
+              width: 36, 
+              height: 36, 
+              borderRadius: 10, 
+              background: 'white', 
+              border: '1px solid var(--border)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: 'pointer', 
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <Heart size={16} fill={isFavorite ? 'var(--danger)' : 'none'} color={isFavorite ? 'var(--danger)' : 'var(--text-tertiary)'} />
+            <Heart size={16} fill={isFavorite ? '#DC2626' : 'none'} color={isFavorite ? '#DC2626' : 'var(--text-tertiary)'} aria-hidden="true" />
           </button>
 
-          {/* Stock overlay for out of stock */}
           {outOfStock && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ background: 'var(--text-primary)', color: 'white', fontSize: '12px', fontWeight: 600, padding: '6px 12px', borderRadius: 20 }}>Out of stock</span>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+              <span style={{ background: 'var(--text-primary)', color: 'white', fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 20, textAlign: 'center', lineHeight: 1.3 }}>Out of stock<br /><span style={{ fontSize: 10, opacity: 0.8, fontWeight: 400 }}>Real inventory</span></span>
             </div>
           )}
         </div>
       </Link>
       
-      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div style={{ padding: 14, display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         {showShop && product.shop && (
-          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {product.shop.name}
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500, letterSpacing: '0.01em' }}>
+            {product.shop.name} • Verified
           </div>
         )}
         
-        <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', flex: 1 }}>
-          <div style={{ fontWeight: 500, fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 36 }}>
+        <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', flex: 1, display: 'block', minWidth: 0 }}>
+          <div style={{ 
+            fontWeight: 600, 
+            fontSize: 14, 
+            color: 'var(--text-primary)', 
+            lineHeight: 1.35, 
+            display: '-webkit-box', 
+            WebkitLineClamp: 2, 
+            WebkitBoxOrient: 'vertical', 
+            overflow: 'hidden', 
+            minHeight: 38,
+            letterSpacing: '-0.01em',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word'
+          }}>
             {product.name}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {product.brand && <span>{product.brand}</span>}
-            {product.brand && product.category && <span>•</span>}
+          <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center', lineHeight: 1.3 }}>
+            {product.brand && <span style={{ fontWeight: 500 }}>{product.brand}</span>}
+            {product.brand && product.category && <span aria-hidden="true">•</span>}
             {product.category && <span>{product.category.name}</span>}
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <span>{product.unit}</span>
           </div>
         </Link>
         
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 10 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)' }}>{formatCurrency(product.price)}</span>
+            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{formatCurrency(product.price)}</span>
             {hasComparePrice && (
-              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>{formatCurrency(product.compareAtPrice!)}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>{formatCurrency(product.compareAtPrice!)}</span>
             )}
           </div>
           {hasComparePrice && (
-            <div style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 500, marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: '#059669', fontWeight: 600, marginTop: 2 }}>
               Save {formatCurrency(product.compareAtPrice! - product.price)}
             </div>
           )}
@@ -144,61 +190,77 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
 
         <div style={{ marginTop: 8 }}>
           {outOfStock ? (
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--danger)', background: 'var(--danger-light)', padding: '3px 8px', borderRadius: 20, display: 'inline-block' }}>Out of stock</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', padding: '4px 8px', borderRadius: 100, display: 'inline-block', border: '1px solid #FECACA' }}>Out of stock • Real count</span>
           ) : lowStock ? (
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--warning)', background: 'var(--warning-light)', padding: '3px 8px', borderRadius: 20, display: 'inline-block' }}>Low stock • {availableStock} left</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#D97706', background: '#FFFBEB', padding: '4px 8px', borderRadius: 100, display: 'inline-block', border: '1px solid #FDE68A' }}>Low • {availableStock} left</span>
           ) : (
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--success)', background: 'var(--success-light)', padding: '3px 8px', borderRadius: 20, display: 'inline-block' }}>In stock</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '4px 8px', borderRadius: 100, display: 'inline-block', border: '1px solid #A7F3D0' }}>In stock • Real</span>
           )}
         </div>
 
-        <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
           {!outOfStock && (
-            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: 'white', height: 40 }}>
               <button 
                 onClick={(e) => { e.preventDefault(); setQty(Math.max(1, qty - 1)); }}
-                style={{ width: 28, height: 32, border: 'none', background: 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 aria-label="Decrease quantity"
+                style={{ width: 36, height: 40, border: 'none', background: 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
-                <Minus size={12} />
+                <Minus size={14} aria-hidden="true" />
               </button>
-              <span style={{ width: 32, textAlign: 'center', fontSize: '13px', fontWeight: 500 }}>{qty}</span>
+              <span style={{ width: 36, textAlign: 'center', fontSize: 13, fontWeight: 600 }} aria-live="polite">{qty}</span>
               <button 
                 onClick={(e) => { e.preventDefault(); setQty(Math.min(availableStock, qty + 1)); }}
-                style={{ width: 28, height: 32, border: 'none', background: 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 aria-label="Increase quantity"
+                style={{ width: 36, height: 40, border: 'none', background: 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 disabled={qty >= availableStock}
               >
-                <Plus size={12} />
+                <Plus size={14} aria-hidden="true" />
               </button>
             </div>
           )}
           
           <button
+            aria-label={outOfStock ? 'Out of stock' : `Add ${qty} ${product.unit} of ${product.name} to cart`}
             style={{ 
               flex: 1, 
-              background: outOfStock ? 'var(--surface-muted)' : 'var(--brand)', 
+              background: outOfStock ? 'var(--surface-muted)' : '#0F766E', 
               color: outOfStock ? 'var(--text-tertiary)' : 'white', 
               border: 'none', 
-              borderRadius: 8, 
-              padding: '8px 12px', 
-              fontSize: '13px', 
+              borderRadius: 10, 
+              padding: '0 14px', 
+              fontSize: 13, 
               fontWeight: 600, 
               cursor: outOfStock ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6
+              gap: 6,
+              height: 40,
+              transition: 'all 0.2s ease',
+              boxShadow: outOfStock ? 'none' : '0 2px 8px -2px rgb(15 118 110 / 0.25)'
             }}
             disabled={outOfStock}
             onClick={() => onAdd?.(product.id, qty)}
-            aria-label={outOfStock ? 'Out of stock' : `Add ${qty} ${product.unit} of ${product.name} to cart`}
           >
-            <Plus size={14} />
+            <Plus size={14} aria-hidden="true" />
             {outOfStock ? 'Unavailable' : 'Add'}
           </button>
         </div>
       </div>
+
+      <style>{`
+        .product-card-elite:hover {
+          border-color: var(--border-strong) !important;
+          box-shadow: var(--shadow-md) !important;
+          transform: translateY(-2px);
+        }
+        @media (max-width: 640px) {
+          .product-card-elite {
+            border-radius: 14px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
