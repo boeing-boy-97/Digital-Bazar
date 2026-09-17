@@ -8,6 +8,7 @@ export type NotificationType =
   | 'order_preparing'
   | 'order_ready'
   | 'order_completed'
+  | 'order_cancelled'
   | 'payment_received'
   | 'payment_failed'
   | 'low_stock'
@@ -178,6 +179,10 @@ export class NotificationService {
       order_completed: {
         title: 'Order Completed',
         message: `Order #${order.orderNumber} completed. Thank you for shopping at ${order.shop.name}! Invoice available.`
+      },
+      order_cancelled: {
+        title: 'Order Cancelled',
+        message: `Order #${order.orderNumber} was cancelled. ${customMessage || 'Contact support for details.'}`
       },
       payment_received: {
         title: 'Payment Received',
