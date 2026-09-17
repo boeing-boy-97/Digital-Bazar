@@ -1,10 +1,29 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Store, Clock, FileText, Truck, Package, Pause, Save, CheckCircle, XCircle, AlertTriangle, MapPin } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ShopSettings() {
   const [shop, setShop] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: '', openingHours: '', closingHours: '', gstin: '', isPickupEnabled: true, isDeliveryEnabled: false, preparationTimeMin: 15 });
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ 
+    name: '', 
+    description: '',
+    category: '',
+    address: '',
+    city: '',
+    pincode: '',
+    phone: '',
+    email: '',
+    openingHours: '', 
+    closingHours: '', 
+    gstin: '', 
+    isPickupEnabled: true, 
+    isDeliveryEnabled: false, 
+    preparationTimeMin: 15, 
+    isPaused: false 
+  });
 
   useEffect(() => { fetchShop(); }, []);
 
@@ -18,12 +37,20 @@ export default function ShopSettings() {
         setShop(detail.shop);
         setForm({
           name: detail.shop.name || '',
+          description: detail.shop.description || '',
+          category: detail.shop.category || '',
+          address: detail.shop.address || '',
+          city: detail.shop.city || '',
+          pincode: detail.shop.pincode || '',
+          phone: detail.shop.phone || '',
+          email: detail.shop.email || '',
           openingHours: detail.shop.openingHours || '09:00',
           closingHours: detail.shop.closingHours || '20:00',
           gstin: detail.shop.gstin || '',
           isPickupEnabled: detail.shop.isPickupEnabled ?? true,
           isDeliveryEnabled: detail.shop.isDeliveryEnabled ?? false,
-          preparationTimeMin: detail.shop.preparationTimeMin || 15
+          preparationTimeMin: detail.shop.preparationTimeMin || 15,
+          isPaused: detail.shop.status === 'PAUSED'
         });
       }
     } finally {
@@ -32,40 +59,260 @@ export default function ShopSettings() {
   };
 
   const handleSave = async () => {
-    alert('Real save: PUT /api/shops/[id] {name, openingHours, closingHours, gstin, isPickupEnabled, isDeliveryEnabled, preparationTimeMin, businessInfo JSON for pause flag}. Server validates, audit log, tenant isolation. GSTIN validation, HSN/SAC config.');
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/shops/${shop.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          category: form.category,
+          address: form.address,
+          city: form.city,
+          pincode: form.pincode,
+          phone: form.phone,
+          email: form.email,
+          openingHours: form.openingHours,
+          closingHours: form.closingHours,
+          gstin: form.gstin,
+          isPickupEnabled: form.isPickupEnabled,
+          isDeliveryEnabled: form.isDeliveryEnabled,
+          preparationTimeMin: form.preparationTimeMin,
+          status: form.isPaused ? 'PAUSED' : shop.status === 'PAUSED' ? 'APPROVED' : shop.status
+        })
+      });
+      
+      if (res.ok) {
+        alert('Shop settings saved successfully');
+        fetchShop();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Unable to save settings');
+      }
+    } catch {
+      alert('Unable to save settings. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const getStatusConfig = () => {
+    if (!shop) return null;
+    if (shop.status === 'APPROVED') return { color: 'var(--success)', bg: 'var(--success-light)', icon: CheckCircle, title: 'Shop approved and live', desc: 'Your shop is visible to customers. Keep your products and stock updated.' };
+    if (shop.status === 'PENDING_REVIEW') return { color: 'var(--warning)', bg: 'var(--warning-light)', icon: Clock, title: 'Pending admin approval', desc: 'Your shop is under review. Admin will approve within 24 hours. You can still add products.' };
+    if (shop.status === 'REJECTED') return { color: 'var(--danger)', bg: 'var(--danger-light)', icon: XCircle, title: 'Shop application rejected', desc: shop.rejectionReason || 'Your application was rejected. Please check reason below and update.' };
+    if (shop.status === 'REQUESTED_CHANGES') return { color: 'var(--warning)', bg: 'var(--warning-light)', icon: AlertTriangle, title: 'Changes requested', desc: shop.rejectionReason || 'Admin requested changes. Please update and resubmit.' };
+    if (shop.status === 'SUSPENDED') return { color: 'var(--danger)', bg: 'var(--danger-light)', icon: XCircle, title: 'Shop suspended', desc: shop.rejectionReason || 'Your shop has been suspended. Contact support.' };
+    if (shop.status === 'PAUSED') return { color: 'var(--text-tertiary)', bg: 'var(--surface-muted)', icon: Pause, title: 'Shop paused', desc: 'You paused your shop. Existing orders continue, new orders are blocked.' };
+    return null;
+  };
+
+  const statusConfig = getStatusConfig();
 
   return (
     <div>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: 8 }}>Shop Settings - Real Data</h1>
-      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 16 }}>Real shop settings from DB, no fake Shree Ganesh Hardware default. Production starts with real shop created by owner, not fake.</div>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em' }}>Shop settings</h1>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: 4 }}>Manage your shop details, hours, and preferences - works for all product categories from medical to hardware</p>
+      </div>
       
-      {loading ? <div>Loading real shop settings from database...</div> : !shop ? (
-        <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-          <div style={{ fontWeight: 600 }}>No shop found - Real empty state</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 8 }}>Production starts empty. Create shop via onboarding, admin must approve. No fake "Shree Ganesh Hardware" default. Real data only.</div>
-        </div>
-      ) : (
-        <div className="card">
-          <div className="card-body stack stack-4" style={{ maxWidth: 600 }}>
-            <div className="form-group"><label className="form-label">Shop Name (Real from DB)</label><input className="form-input" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="Real shop name from DB" /></div>
-            <div className="form-row">
-              <div className="form-group"><label className="form-label">Opening Hours (Real)</label><input className="form-input" value={form.openingHours} onChange={e=>setForm({...form, openingHours: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">Closing Hours (Real)</label><input className="form-input" value={form.closingHours} onChange={e=>setForm({...form, closingHours: e.target.value})} /></div>
-            </div>
-            <div className="form-group"><label className="form-label">GSTIN (Real, for invoice)</label><input className="form-input" value={form.gstin} onChange={e=>setForm({...form, gstin: e.target.value})} placeholder="22AAAAA0000A1Z5 - real GSTIN" /></div>
-            <div className="form-row">
-              <div className="form-group"><label className="form-label">Pickup Enabled (Real)</label><select className="form-select" value={form.isPickupEnabled ? 'Yes' : 'No'} onChange={e=>setForm({...form, isPickupEnabled: e.target.value==='Yes'})}><option>Yes</option><option>No</option></select></div>
-              <div className="form-group"><label className="form-label">Delivery Enabled (Real)</label><select className="form-select" value={form.isDeliveryEnabled ? 'Yes' : 'No'} onChange={e=>setForm({...form, isDeliveryEnabled: e.target.value==='Yes'})}><option>No</option><option>Yes</option></select></div>
-            </div>
-            <div className="form-group"><label className="form-label">Preparation Time Min (Real, for estimates)</label><input type="number" className="form-input" value={form.preparationTimeMin} onChange={e=>setForm({...form, preparationTimeMin: parseInt(e.target.value)||15})} min="5" max="120" /></div>
-            <div className="form-group"><label className="form-label">Pause Shop (Real - blocks new orders)</label><select className="form-select"><option>No - Accepting orders</option><option>Yes - Paused (existing continue)</option></select><div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 4 }}>If paused, new orders blocked with SHOP_PAUSED error, existing continue - real logic</div></div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--surface-muted)', padding: 12, borderRadius: 8 }}>
-              Real settings: GSTIN for invoice, HSN/SAC from product category, pickup/delivery flags, preparation time for estimates, pause logic, businessInfo JSON. No fake defaults. Tenant isolated, audit logged.
-            </div>
-            <button className="btn btn-primary" onClick={handleSave}>Save Real Settings - Audit Logged</button>
+      {loading ? (
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[1,2,3,4].map(i => (
+              <div key={i}>
+                <div className="skeleton" style={{ height: 12, width: 100, marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 36, width: '100%' }} />
+              </div>
+            ))}
           </div>
         </div>
+      ) : !shop ? (
+        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Store size={24} color="var(--text-tertiary)" />
+          </div>
+          <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: 8 }}>No shop found</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto 16px', lineHeight: 1.5 }}>
+            Your shop hasn't been set up yet. Complete the onboarding to create your shop for any category - medical, hardware, grocery, electronics, etc.
+          </div>
+          <Link href="/shopkeeper/onboarding" className="btn btn-primary" style={{ borderRadius: 8 }}>Create shop</Link>
+        </div>
+      ) : (
+        <>
+          {/* Approval Status - Critical for shop owner */}
+          {statusConfig && (
+            <div className="card" style={{ marginBottom: 20, background: statusConfig.bg, borderColor: statusConfig.color, borderWidth: 1 }}>
+              <div className="card-body" style={{ display: 'flex', gap: 14 }}>
+                <div style={{ width: 40, height: 40, background: 'white', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: statusConfig.color }}>
+                  <statusConfig.icon size={20} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: '15px', color: statusConfig.color }}>{statusConfig.title}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>{statusConfig.desc}</div>
+                  
+                  {shop.rejectionReason && (shop.status === 'REJECTED' || shop.status === 'REQUESTED_CHANGES' || shop.status === 'SUSPENDED') && (
+                    <div style={{ marginTop: 12, padding: 12, background: 'white', borderRadius: 8, border: `1px solid ${statusConfig.color}40` }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: statusConfig.color, marginBottom: 4 }}>Admin reason:</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.4 }}>{shop.rejectionReason}</div>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', background: 'white', padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)' }}>
+                      Completion: {shop.completionPercent || 0}%
+                    </span>
+                    <span style={{ fontSize: '12px', background: 'white', padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)' }}>
+                      Status: {shop.status.replace(/_/g, ' ')}
+                    </span>
+                    {shop.status !== 'APPROVED' && (
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Update details below to improve approval chances</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="card">
+            <div className="card-body" style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Store size={14} /> Shop name *
+                  </label>
+                  <input className="form-input" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="e.g. Ganesh Medical, Shree Hardware" style={{ borderRadius: 8 }} />
+                </div>
+                
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Category *</label>
+                  <select className="form-select" value={form.category} onChange={e=>setForm({...form, category: e.target.value})} style={{ borderRadius: 8 }}>
+                    <option value="">Select category</option>
+                    <option value="Medical">Medical • Medicines, equipment</option>
+                    <option value="Hardware">Hardware • Tools, fittings</option>
+                    <option value="Building Material">Building Material • Cement, bricks</option>
+                    <option value="Plumbing">Plumbing • Pipes, sanitary</option>
+                    <option value="Paint">Paint • Paints, putty</option>
+                    <option value="Electrical">Electrical • Wires, lights</option>
+                    <option value="Grocery">Grocery • Daily needs</option>
+                    <option value="Electronics">Electronics • Mobiles, accessories</option>
+                    <option value="General">General • All products</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Description</label>
+                <textarea className="form-textarea" value={form.description} onChange={e=>setForm({...form, description: e.target.value})} placeholder="Describe your shop - what do you sell? Works for all categories from medical to hardware" style={{ borderRadius: 8, minHeight: 80 }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MapPin size={14} /> Address *
+                  </label>
+                  <input className="form-input" value={form.address} onChange={e=>setForm({...form, address: e.target.value})} placeholder="Shop address" style={{ borderRadius: 8 }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">City *</label>
+                  <input className="form-input" value={form.city} onChange={e=>setForm({...form, city: e.target.value})} placeholder="City" style={{ borderRadius: 8 }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Pincode</label>
+                  <input className="form-input" value={form.pincode} onChange={e=>setForm({...form, pincode: e.target.value})} placeholder="440010" style={{ borderRadius: 8 }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Phone</label>
+                  <input className="form-input" value={form.phone} onChange={e=>setForm({...form, phone: e.target.value})} placeholder="Shop phone" style={{ borderRadius: 8 }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Email</label>
+                  <input className="form-input" value={form.email} onChange={e=>setForm({...form, email: e.target.value})} placeholder="Shop email" style={{ borderRadius: 8 }} />
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Clock size={14} /> Opening hours
+                  </label>
+                  <input className="form-input" type="time" value={form.openingHours} onChange={e=>setForm({...form, openingHours: e.target.value})} style={{ borderRadius: 8 }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Clock size={14} /> Closing hours
+                  </label>
+                  <input className="form-input" type="time" value={form.closingHours} onChange={e=>setForm({...form, closingHours: e.target.value})} style={{ borderRadius: 8 }} />
+                </div>
+              </div>
+              
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FileText size={14} /> GSTIN (for invoices)
+                </label>
+                <input className="form-input" value={form.gstin} onChange={e=>setForm({...form, gstin: e.target.value})} placeholder="22AAAAA0000A1Z5" style={{ borderRadius: 8, fontFamily: 'monospace' }} />
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 4 }}>Required for GST invoices - works for all product types</div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Package size={14} /> Pickup enabled
+                  </label>
+                  <select className="form-select" value={form.isPickupEnabled ? 'Yes' : 'No'} onChange={e=>setForm({...form, isPickupEnabled: e.target.value==='Yes'})} style={{ borderRadius: 8 }}>
+                    <option value="Yes">Yes • Customers can pickup</option>
+                    <option value="No">No • Pickup disabled</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Truck size={14} /> Delivery enabled
+                  </label>
+                  <select className="form-select" value={form.isDeliveryEnabled ? 'Yes' : 'No'} onChange={e=>setForm({...form, isDeliveryEnabled: e.target.value==='Yes'})} style={{ borderRadius: 8 }}>
+                    <option value="No">No • Delivery disabled</option>
+                    <option value="Yes">Yes • Offer delivery</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Clock size={14} /> Preparation time
+                  </label>
+                  <select className="form-select" value={form.preparationTimeMin} onChange={e=>setForm({...form, preparationTimeMin: parseInt(e.target.value)})} style={{ borderRadius: 8 }}>
+                    <option value="5">5 min • Very fast (medical)</option>
+                    <option value="10">10 min • Fast</option>
+                    <option value="15">15 min • Standard</option>
+                    <option value="20">20 min • Moderate</option>
+                    <option value="30">30 min • Longer prep (hardware)</option>
+                    <option value="45">45 min • Extended</option>
+                    <option value="60">60 min • Maximum</option>
+                  </select>
+                </div>
+                
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Pause size={14} /> Shop status
+                  </label>
+                  <select className="form-select" value={form.isPaused ? 'Paused' : 'Active'} onChange={e=>setForm({...form, isPaused: e.target.value==='Paused'})} style={{ borderRadius: 8 }}>
+                    <option value="Active">Active • Accepting orders</option>
+                    <option value="Paused">Paused • Not accepting new orders</option>
+                  </select>
+                </div>
+              </div>
+              
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ borderRadius: 8, marginTop: 8, padding: '12px 20px', fontWeight: 600 }}>
+                <Save size={16} />
+                {saving ? 'Saving...' : 'Save settings'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

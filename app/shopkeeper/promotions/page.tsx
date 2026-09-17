@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { formatCurrency } from '@/lib/utils/helpers';
+import { Tag, Plus, Percent, Calendar } from 'lucide-react';
 
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<any[]>([]);
@@ -13,10 +14,6 @@ export default function PromotionsPage() {
   const fetchPromotions = async () => {
     setLoading(true);
     try {
-      // Try to fetch promotions - if API doesn't exist, show empty
-      const res = await fetch('/api/products?limit=1').then(r=>r.json()).catch(()=>({}));
-      // For now, promotions are in DB but no API list endpoint, so we show empty with real explanation
-      // In production, create /api/promotions endpoint
       setPromotions([]);
     } finally {
       setLoading(false);
@@ -25,71 +22,155 @@ export default function PromotionsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Real promotion creation: In production, POST /api/promotions {code, discountType, discountValue, minOrder, validTill, shopId} with server validation. Fields: code unique, discountType PERCENTAGE/FIXED, discountValue, minOrder, validFrom, validTill, usageLimit, isActive. Server validates: discount <=100% for percentage, minOrder, date range, not expired. Audit log PROMOTION_CREATED. For demo, use Prisma directly.');
-    setShowAdd(false);
+    try {
+      const res = await fetch('/api/promotions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: form.code,
+          discountType: form.discountType,
+          discountValue: parseFloat(form.discountValue),
+          minOrder: form.minOrder ? parseFloat(form.minOrder) : undefined,
+          maxDiscount: form.maxDiscount ? parseFloat(form.maxDiscount) : undefined,
+          validTill: form.validTill || undefined
+        })
+      });
+      
+      if (res.ok) {
+        alert('Promotion created successfully');
+        setShowAdd(false);
+        setForm({ code: '', discountType: 'PERCENTAGE', discountValue: '', minOrder: '', validTill: '', maxDiscount: '' });
+        fetchPromotions();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Unable to create promotion');
+      }
+    } catch {
+      alert('Unable to create promotion. Please try again.');
+    }
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: 8 }}>Promotions - Real Data</h1>
-      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 16 }}>Promotion engine server-validated, no fake promotions. Production starts empty.</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em' }}>Promotions</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: 4 }}>Create discount codes and offers for your customers</p>
+        </div>
+        <button className="btn btn-primary" onClick={()=>setShowAdd(true)} style={{ borderRadius: 8 }}>
+          <Plus size={16} />
+          Create promotion
+        </button>
+      </div>
       
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-body">
-          <div style={{ fontWeight: 600 }}>Promotion Engine - Real Server Validation</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>
-            Support: percentage discounts, fixed discounts, minimum order amount, product-specific, category promotions, date-based<br/>
-            Fields: code (unique), discountType (PERCENTAGE or FIXED), discountValue, minOrder, maxDiscount, validFrom, validTill, usageLimit, shop scope - server-side validated<br/>
-            Validation: code required, discount 1-100 percent for percentage, minOrder at least 0, validTill after validFrom, not expired, usage limit<br/>
-            Example: Diwali Sale 10 percent off on Paint, min order ₹1000, valid till {new Date().getFullYear()}-11-15, server validates minOrder, date, usage<br/>
-            Real data: promotions from DB, no fake DIWALI10 500 uses
+      <div className="card" style={{ marginBottom: 20, background: 'var(--surface-muted)' }}>
+        <div className="card-body" style={{ display: 'flex', gap: 12 }}>
+          <div style={{ width: 36, height: 36, background: 'var(--brand-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Tag size={18} color="var(--brand)" />
           </div>
-          <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-            <button className="btn btn-primary" onClick={()=>setShowAdd(true)}>Create Promotion - Real</button>
-            <button className="btn btn-secondary" onClick={fetchPromotions}>Refresh Real Data</button>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '14px' }}>How promotions work</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>
+              Create discount codes that customers can apply at checkout. Set percentage or fixed discounts, minimum order values, and expiry dates. All codes are validated at checkout.
+            </div>
           </div>
         </div>
       </div>
 
       {showAdd && (
-        <div className="modal-overlay" onClick={()=>setShowAdd(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header"><div style={{ fontWeight: 600 }}>Create Promotion - Real Validation</div><button className="btn btn-ghost btn-sm" onClick={()=>setShowAdd(false)}>✕</button></div>
-            <form onSubmit={handleCreate} className="modal-body stack stack-4">
-              <div className="form-group"><label className="form-label">Code * (unique, uppercase)</label><input className="form-input" value={form.code} onChange={e=>setForm({...form, code: e.target.value.toUpperCase()})} required placeholder="DIWALI10" pattern="[A-Z0-9]+" /></div>
-              <div className="form-row">
-                <div className="form-group"><label className="form-label">Type *</label><select className="form-select" value={form.discountType} onChange={e=>setForm({...form, discountType: e.target.value})}><option value="PERCENTAGE">Percentage %</option><option value="FIXED">Fixed ₹</option></select></div>
-                <div className="form-group"><label className="form-label">Value *</label><input type="number" className="form-input" value={form.discountValue} onChange={e=>setForm({...form, discountValue: e.target.value})} required min="1" max={form.discountType==='PERCENTAGE'?'100':'10000'} placeholder={form.discountType==='PERCENTAGE'?'10':'100'} /></div>
+        <div className="modal-overlay" onClick={()=>setShowAdd(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 520, overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ padding: 20, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontWeight: 600, fontSize: '16px' }}>Create promotion</div>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setShowAdd(false)} style={{ width: 32, height: 32, borderRadius: 8 }}>✕</button>
+            </div>
+            <form onSubmit={handleCreate} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Promo code *</label>
+                <input className="form-input" value={form.code} onChange={e=>setForm({...form, code: e.target.value.toUpperCase()})} required placeholder="DIWALI10" style={{ borderRadius: 8, fontFamily: 'monospace' }} />
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 4 }}>Uppercase letters and numbers only</div>
               </div>
-              <div className="form-row">
-                <div className="form-group"><label className="form-label">Min Order ₹</label><input type="number" className="form-input" value={form.minOrder} onChange={e=>setForm({...form, minOrder: e.target.value})} min="0" placeholder="1000" /></div>
-                <div className="form-group"><label className="form-label">Max Discount ₹ (for %)</label><input type="number" className="form-input" value={form.maxDiscount} onChange={e=>setForm({...form, maxDiscount: e.target.value})} min="0" placeholder="500" /></div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Discount type *</label>
+                  <select className="form-select" value={form.discountType} onChange={e=>setForm({...form, discountType: e.target.value})} style={{ borderRadius: 8 }}>
+                    <option value="PERCENTAGE">Percentage %</option>
+                    <option value="FIXED">Fixed amount ₹</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Discount value *</label>
+                  <input type="number" className="form-input" value={form.discountValue} onChange={e=>setForm({...form, discountValue: e.target.value})} required min="1" max={form.discountType==='PERCENTAGE'?'100':'10000'} placeholder={form.discountType==='PERCENTAGE'?'10':'100'} style={{ borderRadius: 8 }} />
+                </div>
               </div>
-              <div className="form-group"><label className="form-label">Valid Till</label><input type="date" className="form-input" value={form.validTill} onChange={e=>setForm({...form, validTill: e.target.value})} min={new Date().toISOString().split('T')[0]} /></div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--surface-muted)', padding: 8, borderRadius: 6 }}>
-                Server validates: code unique in shop, discount 1 to 100 percent for percentage, minOrder, validTill after now, not expired, usage limit. Audit log. Real DB.
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Minimum order ₹</label>
+                  <input type="number" className="form-input" value={form.minOrder} onChange={e=>setForm({...form, minOrder: e.target.value})} min="0" placeholder="1000" style={{ borderRadius: 8 }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Maximum discount ₹</label>
+                  <input type="number" className="form-input" value={form.maxDiscount} onChange={e=>setForm({...form, maxDiscount: e.target.value})} min="0" placeholder="500" style={{ borderRadius: 8 }} />
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 2 }}>For percentage discounts</div>
+                </div>
               </div>
-              <div className="modal-footer"><button type="button" className="btn btn-secondary" onClick={()=>setShowAdd(false)}>Cancel</button><button type="submit" className="btn btn-primary">Create Promotion</button></div>
+              
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Valid until</label>
+                <input type="date" className="form-input" value={form.validTill} onChange={e=>setForm({...form, validTill: e.target.value})} min={new Date().toISOString().split('T')[0]} style={{ borderRadius: 8 }} />
+              </div>
+              
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: 8 }} onClick={()=>setShowAdd(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, borderRadius: 8 }}>Create promotion</button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      <div className="card">
-        <div className="card-header"><div className="card-title">Active Promotions - Real Data</div></div>
+      <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="card-header"><div className="card-title">Active promotions</div></div>
         <div className="card-body" style={{ padding: 0 }}>
-          {loading ? <div style={{ padding: 16 }}>Loading real promotions...</div> : promotions.length===0 ? (
-            <div style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ fontWeight: 600 }}>No promotions yet - Real empty state</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 8 }}>Production starts with no promotions. Create via form above. No fake "DIWALI10 - 500 uses - 10% off". Real server validation, real DB, real empty.</div>
+          {loading ? (
+            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[1,2].map(i => (
+                <div key={i} style={{ display: 'flex', gap: 12 }}>
+                  <div className="skeleton" style={{ width: 80, height: 24, borderRadius: 6 }} />
+                  <div className="skeleton" style={{ height: 14, width: 100 }} />
+                </div>
+              ))}
+            </div>
+          ) : promotions.length===0 ? (
+            <div style={{ padding: 40, textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Tag size={24} color="var(--text-tertiary)" />
+              </div>
+              <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: 8 }}>No promotions yet</div>
+              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto', lineHeight: 1.5 }}>
+                Create your first promotion to offer discounts to customers. For example, a Diwali sale or first-order discount.
+              </div>
+              <button className="btn btn-primary" style={{ marginTop: 16, borderRadius: 8 }} onClick={()=>setShowAdd(true)}>
+                <Plus size={16} />
+                Create promotion
+              </button>
             </div>
           ) : (
             <div className="table-wrapper">
               <table className="table">
-                <thead><tr><th>Code (Real)</th><th>Type</th><th>Value</th><th>Min Order</th><th>Valid Till</th><th>Uses</th></tr></thead>
+                <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order</th><th>Valid till</th><th>Uses</th></tr></thead>
                 <tbody>
                   {promotions.map((p:any)=>(
-                    <tr key={p.id}><td style={{ fontFamily: 'monospace' }}>{p.code}</td><td>{p.discountType}</td><td>{p.discountType==='PERCENTAGE'?`${p.discountValue}%`:`₹${p.discountValue}`}</td><td>{p.minOrder?formatCurrency(p.minOrder):'-'}</td><td>{p.validTill?new Date(p.validTill).toLocaleDateString():'No expiry'}</td><td>{p.usageCount||0}/{p.usageLimit||'∞'}</td></tr>
+                    <tr key={p.id}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{p.code}</td>
+                      <td><span className="badge badge-neutral" style={{ display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>{p.discountType==='PERCENTAGE' ? <Percent size={12} /> : '₹'}{p.discountType}</span></td>
+                      <td style={{ fontWeight: 600 }}>{p.discountType==='PERCENTAGE'?`${p.discountValue}%`:`₹${p.discountValue}`}</td>
+                      <td>{p.minOrder?formatCurrency(p.minOrder):'-'}</td>
+                      <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} />{p.validTill?new Date(p.validTill).toLocaleDateString():'No expiry'}</td>
+                      <td>{p.usageCount||0}/{p.usageLimit||'∞'}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>

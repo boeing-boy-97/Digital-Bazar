@@ -41,8 +41,75 @@ model Profile {
   avatarUrl String?
   bio       String?
   gstin     String?
+  language  String?  @default("en")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Master Catalog for ALL product categories - medical to hardware
+model MasterCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  parentId    String?
+  parent      MasterCategory? @relation("MasterCategoryParent", fields: [parentId], references: [id])
+  children    MasterCategory[] @relation("MasterCategoryParent")
+  description String?
+  icon        String?
+  attributes  String?  // JSON array of attribute definitions for this category
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  masterProducts MasterProduct[]
+}
+
+model MasterProduct {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  brand           String?
+  categoryId      String?
+  category        MasterCategory? @relation(fields: [categoryId], references: [id])
+  description     String?
+  specifications  String?  // JSON object for category-specific specs
+  attributes      String?  // JSON object for flexible attributes (RAM, storage, color, etc for mobile; grade, bag size for cement; etc)
+  searchableText  String?
+  embedding       String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  variants        MasterProductVariant[]
+  images          MasterProductImage[]
+  shopProducts    Product[] // Shop listings referencing this master product
+
+  @@index([name])
+  @@index([brand])
+  @@index([categoryId])
+}
+
+model MasterProductVariant {
+  id              String   @id @default(cuid())
+  masterProductId String
+  masterProduct   MasterProduct @relation(fields: [masterProductId], references: [id], onDelete: Cascade)
+  name            String   // e.g. "8GB + 128GB", "500mg", "1L", "Red"
+  sku             String   @unique
+  attributes      String?  // JSON for variant-specific attributes
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  shopVariants    ProductVariant[]
+}
+
+model MasterProductImage {
+  id              String   @id @default(cuid())
+  masterProductId String
+  masterProduct   MasterProduct @relation(fields: [masterProductId], references: [id], onDelete: Cascade)
+  url             String
+  alt             String?
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
 }
 
 model Shop {
@@ -66,6 +133,7 @@ model Shop {
   closingHours      String?
   holidays          String?
   status            String     @default("PENDING_REVIEW")
+  rejectionReason   String?
   isPickupEnabled   Boolean    @default(true)
   isDeliveryEnabled Boolean    @default(false)
   preparationTimeMin Int       @default(15)
@@ -73,6 +141,8 @@ model Shop {
   reviewCount       Int        @default(0)
   gstin             String?
   businessInfo      String?
+  bankDetails       String?    // JSON for bank/payment details
+  completionPercent Int        @default(0)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
@@ -136,6 +206,8 @@ model Product {
   id                String   @id @default(cuid())
   shopId            String
   shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  masterProductId   String?
+  masterProduct     MasterProduct? @relation(fields: [masterProductId], references: [id])
   categoryId        String?
   category          Category? @relation(fields: [categoryId], references: [id])
   storageZoneId     String?
@@ -175,18 +247,22 @@ model Product {
 
   @@index([shopId])
   @@index([name])
+  @@index([masterProductId])
 }
 
 model ProductVariant {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name      String
-  sku       String   @unique
-  price     Float
-  stock     Int      @default(0)
-  attributes String?
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  masterVariantId   String?
+  masterVariant     MasterProductVariant? @relation(fields: [masterVariantId], references: [id])
+  name              String
+  sku               String   @unique
+  price             Float
+  stock             Int      @default(0)
+  reservedStock     Int      @default(0)
+  attributes        String?
+  createdAt         DateTime @default(now())
 }
 
 model ProductImage {
@@ -383,6 +459,7 @@ model Notification {
   message   String
   isRead    Boolean  @default(false)
   channel   String   @default("in_app")
+  deliveryStatus String @default("pending")
   createdAt DateTime @default(now())
 }
 
@@ -450,6 +527,8 @@ model Promotion {
   isActive    Boolean  @default(true)
   validFrom   DateTime?
   validTill   DateTime?
+  usageCount  Int      @default(0)
+  usageLimit  Int?
   createdAt   DateTime @default(now())
 }
 

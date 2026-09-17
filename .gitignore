@@ -59,3 +59,5 @@ public/uploads
 
 # Misc
 *.tsbuildinfo
+digital-bazar-key*
+.ssh/

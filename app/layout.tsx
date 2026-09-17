@@ -6,31 +6,28 @@ import '@/styles/forms.css';
 import '@/styles/tables.css';
 import { validateEnv } from '@/lib/env/validation';
 
-// Fail-fast env validation in production - real data only
 try {
   validateEnv();
 } catch (e: any) {
   if (process.env.NODE_ENV === 'production') {
-    console.error('❌ Env validation failed:', e.message);
-    // In production, throw to prevent starting with invalid config
-    // For build time, we allow but log
+    console.error('Env validation failed:', e.message);
   } else {
-    console.warn('⚠️ Env validation warning:', e.message);
+    console.warn('Env validation warning:', e.message);
   }
 }
 
 export const metadata = {
   title: 'Digital Bazar - Select Before You Arrive',
-  description: 'Avoid the crowd. Select your products before you arrive. Local commerce platform for hardware, building materials, paint, plumbing & more. Real inventory, real time, no fake data.',
-  keywords: 'local commerce, hardware, building material, plumbing, paint, Digital Bazar, real inventory, select before arrive',
+  description: 'Shop from nearby stores without the wait. Browse products, order ahead, and collect when ready. Supporting local hardware, building materials, paint, plumbing & more.',
+  keywords: 'local shopping, nearby shops, hardware, building material, plumbing, paint, Digital Bazar, order ahead, pickup',
   authors: [{ name: 'Digital Bazar' }],
   icons: {
     icon: '/logo.svg',
     apple: '/icon-192.png',
   },
   openGraph: {
-    title: 'Digital Bazar - Select Before You Arrive',
-    description: 'Select products before visiting the shop. We prepare while you travel. Real inventory, transactional, GST invoices.',
+    title: 'Digital Bazar - Shop Local. Skip the Wait.',
+    description: 'Browse products from nearby shops, order ahead, and collect when ready. Supporting local businesses in your area.',
     type: 'website',
     images: ['/icon-512.png'],
   },
@@ -54,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#0F766E" />
-        <meta name="description" content="Digital Bazar - Select Before You Arrive. Real inventory, real time, no fake data. Production starts empty." />
+        <meta name="description" content="Digital Bazar - Shop from nearby stores without the wait. Browse, order ahead, and collect when ready." />
       </head>
       <body>
         {children}
