@@ -17,9 +17,9 @@ try {
 }
 
 export const metadata = {
-  title: 'Digital Bazar - Select Before You Arrive',
-  description: 'Shop from nearby stores without the wait. Browse products, order ahead, and collect when ready. Supporting local hardware, building materials, paint, plumbing & more.',
-  keywords: 'local shopping, nearby shops, hardware, building material, plumbing, paint, Digital Bazar, order ahead, pickup',
+  title: 'Digital Bazar - Shop Local. Skip the Wait.',
+  description: 'Browse real products from verified local shops. Order ahead, get notified when ready, and collect with QR verification. Medical to hardware, all categories.',
+  keywords: 'local shopping, nearby shops, Digital Bazar, order ahead, pickup, medical, hardware, building material, grocery',
   authors: [{ name: 'Digital Bazar' }],
   icons: {
     icon: '/logo.svg',
@@ -27,7 +27,7 @@ export const metadata = {
   },
   openGraph: {
     title: 'Digital Bazar - Shop Local. Skip the Wait.',
-    description: 'Browse products from nearby shops, order ahead, and collect when ready. Supporting local businesses in your area.',
+    description: 'Browse products from nearby shops, order ahead, and collect when ready. Supporting local businesses.',
     type: 'website',
     images: ['/icon-512.png'],
   },
@@ -46,12 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#0F766E" />
-        <meta name="description" content="Digital Bazar - Shop from nearby stores without the wait. Browse, order ahead, and collect when ready." />
       </head>
       <body>
         {children}

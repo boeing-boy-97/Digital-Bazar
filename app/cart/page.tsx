@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Header } from '@/components/common/Header';
-import { BottomNav } from '@/components/common/BottomNav';
+import { EliteHeader } from '@/components/layout/EliteHeader';
+import { EliteFooter } from '@/components/layout/EliteFooter';
 import { formatCurrency } from '@/lib/utils/helpers';
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CartPage() {
@@ -11,9 +11,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCarts();
-  }, []);
+  useEffect(() => { fetchCarts(); }, []);
 
   const fetchCarts = async () => {
     setLoading(true);
@@ -21,17 +19,13 @@ export default function CartPage() {
     const data = await res.json();
     setCarts(data.carts || []);
     setLoading(false);
-    
-    const totalItems = (data.carts || []).reduce((sum: number, c: any) => sum + c.items.reduce((s: number, i: any) => s + i.quantity, 0), 0);
-    localStorage.setItem('db_cart_count', totalItems.toString());
+    const total = (data.carts || []).reduce((sum: number, c: any) => sum + c.items.reduce((s: number, i: any) => s + i.quantity, 0), 0);
+    localStorage.setItem('db_cart_count', total.toString());
   };
 
   const updateQty = async (itemId: string, qty: number) => {
-    await fetch('/api/cart/add', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemId, quantity: qty })
-    });
+    if (qty < 1) return;
+    await fetch('/api/cart/add', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId, quantity: qty }) });
     fetchCarts();
   };
 
@@ -43,32 +37,10 @@ export default function CartPage() {
   const placeOrder = async (shopId: string) => {
     setPlacing(shopId);
     try {
-      // Idempotency key prevents duplicate orders on double-click or network retry - real production
-      const idempotencyKey = `order_${shopId}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-      
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-idempotency-key': idempotencyKey
-        },
-        body: JSON.stringify({ 
-          shopId, 
-          paymentMethod: 'PAY_AT_STORE', 
-          pickupType: 'PICKUP',
-          idempotencyKey
-        })
-      });
+      const key = `order_${shopId}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-idempotency-key': key }, body: JSON.stringify({ shopId, paymentMethod: 'PAY_AT_STORE', pickupType: 'PICKUP', idempotencyKey: key }) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || data.error || 'Failed to place order');
-      
-      // Check if idempotent
-      if (data.idempotent) {
-        alert(`Order already placed (idempotent) - Order #${data.order.orderNumber}`);
-      } else {
-        alert(`Order placed! Order #${data.order.orderNumber} - Shop will prepare while you travel`);
-      }
-      
+      if (!res.ok) throw new Error(data.error?.message || data.error || 'Failed');
       fetchCarts();
       window.location.href = `/orders/${data.order.id}`;
     } catch (e: any) {
@@ -78,14 +50,14 @@ export default function CartPage() {
     }
   };
 
-  const calculateTotals = (items: any[]) => {
+  const calcTotals = (items: any[]) => {
     let subtotal = 0, discount = 0, tax = 0;
     for (const item of items) {
       const price = item.product.price;
       const qty = item.quantity;
       const disc = (item.product.discount || 0) / 100 * price * qty;
-      const afterDisc = price * qty - disc;
-      const t = (item.product.taxRate || 0) / 100 * afterDisc;
+      const after = price * qty - disc;
+      const t = (item.product.taxRate || 0) / 100 * after;
       subtotal += price * qty;
       discount += disc;
       tax += t;
@@ -95,96 +67,72 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <div className="page">
-        <Header />
-        <main className="main-content">
-          <div className="container" style={{ paddingTop: 24 }}>Loading cart...</div>
-        </main>
+      <div style={{ background: 'var(--background)', minHeight: '100vh' }}>
+        <EliteHeader />
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>Loading cart...</div>
       </div>
     );
   }
 
   if (carts.length === 0) {
     return (
-      <div className="page">
-        <Header />
-        <main className="main-content">
-          <div className="container" style={{ paddingTop: 48 }}>
-            <div className="empty-state">
-              <div className="empty-state-icon"><ShoppingBag size={32} /></div>
-              <div className="empty-state-title">Your cart is empty</div>
-              <div className="empty-state-description">Browse shops and add products to cart. Select before you arrive!</div>
-              <Link href="/shops" className="btn btn-primary">Browse Shops</Link>
-            </div>
-          </div>
+      <div style={{ background: 'var(--background)', minHeight: '100vh' }}>
+        <EliteHeader />
+        <main style={{ padding: '80px 24px', maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, background: 'white', border: '1px solid var(--border)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}><ShoppingBag size={28} color="var(--text-tertiary)" /></div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px' }}>Your cart is empty</h1>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>Browse shops and add products to cart. Order ahead and collect when ready.</p>
+          <Link href="/shops" style={{ background: 'var(--brand)', color: 'white', borderRadius: 12, padding: '12px 24px', fontWeight: 600, fontSize: 14, textDecoration: 'none', display: 'inline-block' }}>Browse Shops</Link>
         </main>
-        <BottomNav />
+        <EliteFooter />
       </div>
     );
   }
 
   return (
-    <div className="page">
-      <Header />
-      <main className="main-content">
-        <div className="container" style={{ paddingTop: 24, paddingBottom: 80 }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: 16 }}>Shopping Cart</h1>
-          
-          <div style={{ display: 'grid', gap: 24 }}>
+    <div style={{ background: 'var(--background)', minHeight: '100vh' }}>
+      <EliteHeader />
+      <main style={{ padding: '32px 0 80px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 24px' }}>
+          <Link href="/shops" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: 20 }}><ArrowLeft size={14} />Continue shopping</Link>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 24px', fontFamily: 'var(--font-heading)' }}>Shopping cart</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {carts.map(cart => {
-              const totals = calculateTotals(cart.items);
+              const totals = calcTotals(cart.items);
               return (
-                <div key={cart.id} className="card">
-                  <div className="card-header">
-                    <div className="card-title">Shop Cart • {cart.items.length} items</div>
-                    <button className="btn btn-ghost btn-sm" onClick={async () => {
-                      await fetch(`/api/cart/add?cartId=${cart.id}`, { method: 'DELETE' });
-                      fetchCarts();
-                    }}>Clear</button>
+                <div key={cart.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{cart.items[0]?.product?.shop?.name || 'Shop Cart'} • {cart.items.length} items</div>
+                    <button onClick={async () => { await fetch(`/api/cart/add?cartId=${cart.id}`, { method: 'DELETE' }); fetchCarts(); }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>Clear</button>
                   </div>
-                  <div className="card-body">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      {cart.items.map((item: any) => (
-                        <div key={item.id} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                          <div style={{ width: 60, height: 60, background: 'var(--surface-muted)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {item.product.images?.[0] ? <img src={item.product.images[0].url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} /> : '📦'}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 500 }}>{item.product.name}</div>
-                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{item.product.brand} • {formatCurrency(item.product.price)} / {item.product.unit}</div>
-                          </div>
-                          <div className="quantity-selector">
-                            <button className="quantity-btn" onClick={() => updateQty(item.id, item.quantity - 1)}><Minus size={14} /></button>
-                            <div className="quantity-value">{item.quantity}</div>
-                            <button className="quantity-btn" onClick={() => updateQty(item.id, item.quantity + 1)}><Plus size={14} /></button>
-                          </div>
-                          <div style={{ width: 80, textAlign: 'right', fontWeight: 600 }}>{formatCurrency(item.product.price * item.quantity)}</div>
-                          <button className="btn btn-ghost btn-sm" onClick={() => removeItem(item.id)}><Trash2 size={16} /></button>
+                  <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {cart.items.map((item: any) => (
+                      <div key={item.id} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                        <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                          {item.product.images?.[0] ? <img src={item.product.images[0].url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📦'}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="card-footer" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                      <span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span>
-                    </div>
-                    {totals.discount > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--success)' }}>
-                        <span>Discount</span><span>-{formatCurrency(totals.discount)}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.product.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.product.brand} • {formatCurrency(item.product.price)} / {item.product.unit}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                          <button onClick={() => updateQty(item.id, item.quantity - 1)} style={{ width: 32, height: 32, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={12} /></button>
+                          <div style={{ width: 32, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{item.quantity}</div>
+                          <button onClick={() => updateQty(item.id, item.quantity + 1)} style={{ width: 32, height: 32, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={12} /></button>
+                        </div>
+                        <div style={{ width: 80, textAlign: 'right', fontWeight: 600, fontSize: 14 }}>{formatCurrency(item.product.price * item.quantity)}</div>
+                        <button onClick={() => removeItem(item.id)} style={{ width: 32, height: 32, border: '1px solid var(--border)', background: 'white', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={14} color="var(--text-tertiary)" /></button>
                       </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                      <span>Tax</span><span>{formatCurrency(totals.tax)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '16px', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                      <span>Total</span><span>{formatCurrency(totals.total)}</span>
-                    </div>
-                    <button className="btn btn-primary btn-lg btn-full" style={{ marginTop: 12 }} onClick={() => placeOrder(cart.shopId)} disabled={placing === cart.shopId}>
-                      {placing === cart.shopId ? 'Placing...' : `Place Order • ${formatCurrency(totals.total)}`}
-                    </button>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 4 }}>
-                      Shop will prepare while you travel • Pay at store or online
-                    </div>
+                    ))}
+                  </div>
+                  <div style={{ padding: 20, background: 'var(--surface-muted)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span></div>
+                    {totals.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--success)' }}><span>Discount</span><span>-{formatCurrency(totals.discount)}</span></div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span>Tax</span><span>{formatCurrency(totals.tax)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16, paddingTop: 8, borderTop: '1px solid var(--border)' }}><span>Total</span><span>{formatCurrency(totals.total)}</span></div>
+                    <button onClick={() => placeOrder(cart.shopId)} disabled={placing === cart.shopId} style={{ marginTop: 12, background: 'var(--brand)', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>{placing === cart.shopId ? 'Placing...' : `Place Order • ${formatCurrency(totals.total)}`}</button>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center' }}>Shop will prepare while you travel • Pay at store or online</div>
                   </div>
                 </div>
               );
@@ -192,7 +140,7 @@ export default function CartPage() {
           </div>
         </div>
       </main>
-      <BottomNav />
+      <EliteFooter />
     </div>
   );
 }
