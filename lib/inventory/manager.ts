@@ -179,24 +179,31 @@ export async function restockInventory(productId: string, quantity: number, reas
   });
 }
 
-export function calculateCartTotals(items: { price: number; quantity: number; discount?: number; taxRate?: number }[]) {
-  let subtotal = 0;
-  let discount = 0;
-  let tax = 0;
+export function calculateCartTotals(items: { pricePaise?: number; price?: number; quantity: number; discount?: number; taxRate?: number }[]) {
+  let subtotalPaise = 0;
+  let discountPaise = 0;
+  let taxPaise = 0;
 
   for (const item of items) {
-    const itemSubtotal = item.price * item.quantity;
-    const itemDiscount = (item.discount || 0) / 100 * itemSubtotal;
-    const afterDiscount = itemSubtotal - itemDiscount;
-    const itemTax = (item.taxRate || 0) / 100 * afterDiscount;
+    const pricePaise = item.pricePaise ?? (item.price != null ? Math.round(item.price * 100) : 0);
+    const itemSubtotalPaise = pricePaise * item.quantity;
+    const itemDiscountPaise = Math.round(itemSubtotalPaise * (item.discount || 0) / 100);
+    const afterDiscountPaise = itemSubtotalPaise - itemDiscountPaise;
+    const itemTaxPaise = Math.round(afterDiscountPaise * (item.taxRate || 0) / 100);
 
-    subtotal += itemSubtotal;
-    discount += itemDiscount;
-    tax += itemTax;
+    subtotalPaise += itemSubtotalPaise;
+    discountPaise += itemDiscountPaise;
+    taxPaise += itemTaxPaise;
   }
 
-  const total = subtotal - discount + tax;
-  return { subtotal, discount, tax, total };
+  const totalPaise = subtotalPaise - discountPaise + taxPaise;
+  return { 
+    subtotal: Math.round(subtotalPaise) / 100,
+    discount: Math.round(discountPaise) / 100,
+    tax: Math.round(taxPaise) / 100,
+    total: Math.round(totalPaise) / 100,
+    subtotalPaise, discountPaise, taxPaise, totalPaise
+  };
 }
 
 // Zone sorting deterministic - A-E, by sortOrder then name

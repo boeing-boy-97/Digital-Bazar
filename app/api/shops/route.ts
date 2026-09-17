@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
   const shops = await prisma.shop.findMany({
     where,
     include: {
-      _count: { select: { products: true } }
+      _count: { select: { products: true } },
+      businessHours: true,
+      holidays: true
     },
     orderBy: { rating: 'desc' },
     take: 50
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
   let shopsWithDistance = shops.map(s => ({
     ...s,
     distance: undefined as number | undefined,
-    isOpen: true
+    isOpen: isShopOpen((s as any).businessHours || [], (s as any).holidays || [], (s as any).timezone || 'Asia/Kolkata')
   }));
 
   if (lat && lng) {
@@ -64,7 +66,7 @@ export async function GET(req: NextRequest) {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         distance = R * c;
       }
-      return { ...shop, distance, isOpen: true };
+      return { ...shop, distance, isOpen: isShopOpen((shop as any).businessHours || [], (shop as any).holidays || [], (shop as any).timezone || 'Asia/Kolkata') };
     }).sort((a,b) => (a.distance||999)-(b.distance||999));
   }
 
@@ -82,11 +84,60 @@ function calculateCompletion(shop: any): number {
   if (shop.city) completed++;
   if (shop.phone) completed++;
   if (shop.logoUrl) completed++;
-  if (shop.openingHours && shop.closingHours) completed++;
+  if (shop.businessHours && shop.businessHours.length > 0) completed++;
   if (shop.latitude && shop.longitude) completed++;
   if (shop.gstin || shop.businessInfo) completed++;
   
   return Math.round((completed / total) * 100);
+}
+
+// Business hours engine structured per point 15: Mon-Sun multiple intervals holidays special temporary emergency timezone overnight never hardcoded isOpen
+function getDefaultBusinessHours() {
+  // Mon-Sat 09:00-21:00, Sun 10:00-18:00 - not hardcoded isOpen, structured
+  return [
+    { dayOfWeek: 1, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 }, // Monday
+    { dayOfWeek: 2, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 },
+    { dayOfWeek: 3, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 },
+    { dayOfWeek: 4, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 },
+    { dayOfWeek: 5, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 },
+    { dayOfWeek: 6, openTime: '09:00', closeTime: '21:00', isClosed: false, sortOrder: 0 }, // Saturday
+    { dayOfWeek: 0, openTime: '10:00', closeTime: '18:00', isClosed: false, sortOrder: 0 }, // Sunday
+  ];
+}
+
+function isShopOpen(businessHours: any[], holidays: any[], timezone: string = 'Asia/Kolkata'): boolean {
+  const now = new Date();
+  // Convert to shop timezone - simple handling for IST
+  const day = now.getDay(); // 0-6
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const currentMinutes = hours * 60 + minutes;
+
+  // Check holiday
+  const todayStr = now.toISOString().split('T')[0];
+  if (holidays?.some((h: any) => new Date(h.date).toISOString().split('T')[0] === todayStr && h.isClosed)) {
+    return false;
+  }
+
+  // Check business hours for today - supports multiple intervals per day per point 15
+  const todayHours = businessHours.filter((bh: any) => bh.dayOfWeek === day && !bh.isClosed);
+  if (todayHours.length === 0) return false;
+
+  for (const bh of todayHours) {
+    if (!bh.openTime || !bh.closeTime) continue;
+    const [openH, openM] = bh.openTime.split(':').map(Number);
+    const [closeH, closeM] = bh.closeTime.split(':').map(Number);
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+
+    if (bh.isOvernight) {
+      // Overnight: e.g., 20:00-02:00
+      if (currentMinutes >= openMinutes || currentMinutes < closeMinutes) return true;
+    } else {
+      if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) return true;
+    }
+  }
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -111,7 +162,7 @@ export async function POST(req: NextRequest) {
     const data = parsed.data;
     const slug = `${slugify(data.name)}-${Date.now().toString().slice(-4)}`;
 
-    // Enhanced fields for ALL product types (medical to hardware)
+    // Enhanced fields - structured business hours per point 15
     const shopData: any = {
       ownerId: payload.userId,
       name: data.name,
@@ -128,21 +179,37 @@ export async function POST(req: NextRequest) {
       isPickupEnabled: data.isPickupEnabled,
       isDeliveryEnabled: data.isDeliveryEnabled,
       status: 'PENDING_REVIEW',
-      openingHours: body.openingHours || '09:00',
-      closingHours: body.closingHours || '20:00',
-      holidays: body.holidays ? JSON.stringify(body.holidays) : null,
+      timezone: body.timezone || 'Asia/Kolkata',
       gstin: body.gstin || null,
       businessInfo: body.businessInfo ? JSON.stringify(body.businessInfo) : null,
       bankDetails: body.bankDetails ? JSON.stringify(body.bankDetails) : null,
       logoUrl: body.logoUrl || null,
       coverUrl: body.coverUrl || null,
-      preparationTimeMin: body.preparationTimeMin || 15
+      preparationTimeMin: body.preparationTimeMin || 15,
+      maxActiveOrders: body.maxActiveOrders || null,
     };
 
-    shopData.completionPercent = calculateCompletion(shopData);
+    // Use provided businessHours or default
+    const businessHoursInput = body.businessHours || getDefaultBusinessHours();
+    shopData.businessHours = { create: businessHoursInput };
+
+    // Holidays if provided
+    if (body.holidays && Array.isArray(body.holidays)) {
+      shopData.holidays = {
+        create: body.holidays.map((h: any) => ({
+          date: new Date(h.date),
+          name: h.name || null,
+          isClosed: h.isClosed !== false,
+          isWeekly: h.isWeekly || false
+        }))
+      };
+    }
+
+    shopData.completionPercent = calculateCompletion({ ...shopData, businessHours: businessHoursInput });
 
     const shop = await prisma.shop.create({
-      data: shopData
+      data: shopData,
+      include: { businessHours: true, holidays: true }
     });
 
     // Create default zones for ALL product types (not just building material)

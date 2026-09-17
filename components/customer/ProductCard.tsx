@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
 import { Plus, Heart, Minus, Package } from 'lucide-react';
 import { useState } from 'react';
 
@@ -10,8 +10,10 @@ interface ProductCardProps {
     name: string;
     slug?: string;
     brand?: string | null;
-    price: number;
+    price?: number; // legacy INR float
+    pricePaise?: number; // authoritative paise
     compareAtPrice?: number | null;
+    compareAtPricePaise?: number | null;
     discount?: number | null;
     stock: number;
     reservedStock?: number;
@@ -37,7 +39,11 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
   const outOfStock = availableStock <= 0 || product.isActive === false;
   const imageUrl = product.images?.[0]?.url;
   const hasRealDiscount = product.discount && product.discount > 0 && product.discount <= 100;
-  const hasComparePrice = product.compareAtPrice && product.compareAtPrice > product.price;
+  // Money: authoritative paise, fallback to legacy INR
+  const pricePaise = product.pricePaise ?? (product.price != null ? Math.round(product.price * 100) : 0);
+  const comparePaise = product.compareAtPricePaise ?? (product.compareAtPrice != null ? Math.round(product.compareAtPrice * 100) : null);
+  const priceINR = fromPaise(pricePaise);
+  const hasComparePrice = comparePaise != null && comparePaise > pricePaise;
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -176,14 +182,14 @@ export function ProductCard({ product, onAdd, showShop = true }: ProductCardProp
         
         <div style={{ marginTop: 10 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{formatCurrency(product.price)}</span>
-            {hasComparePrice && (
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>{formatCurrency(product.compareAtPrice!)}</span>
+            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{formatPaise(pricePaise)}</span>
+            {hasComparePrice && comparePaise && (
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>{formatPaise(comparePaise)}</span>
             )}
           </div>
-          {hasComparePrice && (
+          {hasComparePrice && comparePaise && (
             <div style={{ fontSize: 11, color: '#059669', fontWeight: 600, marginTop: 2 }}>
-              Save {formatCurrency(product.compareAtPrice! - product.price)}
+              Save {formatPaise(comparePaise - pricePaise)}
             </div>
           )}
         </div>

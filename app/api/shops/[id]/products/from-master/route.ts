@@ -62,19 +62,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Product already exists in your shop. Update existing listing instead.' }, { status: 409 });
     }
 
-    // Generate SKU if not provided
+    // Generate SKU if not provided - unique per shop per point 64
     const finalSku = sku || `${masterProduct.slug.toUpperCase()}-${shopId.slice(-4)}-${Date.now().toString().slice(-4)}`;
     
-    // Check SKU uniqueness
-    const skuExists = await prisma.product.findUnique({ where: { sku: finalSku } });
+    // Check SKU uniqueness per shop
+    const skuExists = await prisma.product.findFirst({ where: { shopId, sku: finalSku } });
     if (skuExists) {
-      return NextResponse.json({ error: 'SKU already exists, please use different SKU' }, { status: 409 });
+      return NextResponse.json({ error: 'SKU already exists in your shop, please use different SKU' }, { status: 409 });
     }
 
     const productName = customName || masterProduct.name;
     const productSlug = `${slugify(productName)}-${Date.now().toString().slice(-4)}`;
 
-    // Create shop product from master
+    // Convert INR to paise - authoritative per point 50
+    const pricePaise = Math.round(parseFloat(price) * 100);
+    const comparePaise = compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null;
+
+    // Create shop product from master - master→shop listing per point 11
     const product = await prisma.product.create({
       data: {
         shopId,
@@ -86,8 +90,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         description: customDescription || masterProduct.description,
         brand: masterProduct.brand,
         unit: unit || 'piece',
-        price: parseFloat(price),
-        compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        pricePaise,
+        compareAtPricePaise: comparePaise,
         taxRate: taxRate ? parseFloat(taxRate) : 0,
         hsnCode: hsnCode || null,
         stock: stock ? parseInt(stock) : 0,
@@ -125,7 +129,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       });
     }
 
-    // Create variant if masterVariantId provided
+    // Create variant if masterVariantId provided - pricePaise authoritative
     if (masterVariantId) {
       const masterVariant = masterProduct.variants.find(v => v.id === masterVariantId);
       if (masterVariant) {
@@ -135,7 +139,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             masterVariantId: masterVariant.id,
             name: masterVariant.name,
             sku: `${finalSku}-${slugify(masterVariant.name)}`,
-            price: parseFloat(price),
+            pricePaise,
             stock: stock ? parseInt(stock) : 0,
             attributes: masterVariant.attributes
           }

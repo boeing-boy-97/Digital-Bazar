@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatDate } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, formatDate } from '@/lib/utils/helpers';
 import Link from 'next/link';
 import { Clock, Package, CheckCircle, AlertTriangle, Search, Filter } from 'lucide-react';
 
@@ -152,7 +152,7 @@ export default function ShopkeeperOrders() {
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>{o.items?.slice(0,2).map((i:any)=>i.productName).join(', ')}{o.items?.length>2?'...':''}</div>
                     </td>
-                    <td style={{ fontWeight: 600 }}>{formatCurrency(o.total)}</td>
+                    <td style={{ fontWeight: 600 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</td>
                     <td><span className={`badge badge-${getStatusColor(o.status)}`}>{o.status.replace(/_/g, ' ')}</span></td>
                     <td style={{ fontSize: '12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={10} />{formatDate(o.createdAt)}</div>

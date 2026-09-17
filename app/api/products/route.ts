@@ -81,6 +81,10 @@ export async function POST(req: NextRequest) {
     const shopId = body.shopId || shop?.id;
     if (!shopId) return NextResponse.json({ error: 'shopId required' }, { status: 400 });
 
+    // Convert INR to paise for storage - authoritative per point 50
+    const pricePaise = Math.round(data.price * 100);
+    const comparePaise = data.compareAtPrice ? Math.round(data.compareAtPrice * 100) : null;
+
     const product = await prisma.product.create({
       data: {
         shopId,
@@ -95,8 +99,8 @@ export async function POST(req: NextRequest) {
         unit: data.unit,
         size: data.size,
         weight: data.weight,
-        price: data.price,
-        compareAtPrice: data.compareAtPrice,
+        pricePaise,
+        compareAtPricePaise: comparePaise,
         discount: data.discount,
         taxRate: data.taxRate,
         hsnCode: data.hsnCode,

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
 import { ProductCard } from '@/components/customer/ProductCard';
 import { ShoppingCart, Heart, ShieldCheck, Clock, Package, MapPin, ArrowLeft, Check } from 'lucide-react';
 import Link from 'next/link';
@@ -69,6 +69,9 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
   const available = product.stock - (product.reservedStock || 0);
   const outOfStock = available <= 0 || product.isActive === false;
+  const pricePaise = product.pricePaise ?? (product.price != null ? Math.round(product.price * 100) : 0);
+  const comparePaise = product.compareAtPricePaise ?? (product.compareAtPrice != null ? Math.round(product.compareAtPrice * 100) : null);
+  const priceINR = fromPaise(pricePaise);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -79,7 +82,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
     brand: product.brand ? { '@type': 'Brand', name: product.brand } : undefined,
     offers: {
       '@type': 'Offer',
-      price: product.price,
+      price: priceINR,
       priceCurrency: 'INR',
       availability: outOfStock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
       seller: product.shop ? { '@type': 'Organization', name: product.shop.name } : undefined,
@@ -116,8 +119,8 @@ export default function ProductDetailClient({ id }: { id: string }) {
             <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 12, lineHeight: 1.2, letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{product.name}</h1>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{formatCurrency(product.price)}</span>
-              {product.compareAtPrice && <span style={{ textDecoration: 'line-through', color: 'var(--text-tertiary)', fontSize: 14 }}>{formatCurrency(product.compareAtPrice)}</span>}
+              <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{formatPaise(pricePaise)}</span>
+              {comparePaise && <span style={{ textDecoration: 'line-through', color: 'var(--text-tertiary)', fontSize: 14 }}>{formatPaise(comparePaise)}</span>}
               {product.discount > 0 && <span style={{ background: '#ECFDF5', color: '#059669', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, border: '1px solid #A7F3D0' }}>{product.discount}% OFF</span>}
             </div>
 
@@ -135,7 +138,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                   <div style={{ width: 48, textAlign: 'center', fontWeight: 600, fontSize: 14 }} aria-live="polite">{qty}</div>
                   <button aria-label="Increase quantity" onClick={() => setQty(Math.min(available, qty+1))} style={{ width: 40, height: 40, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', fontSize: 16, fontWeight: 600 }}>+</button>
                 </div>
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatCurrency(product.price * qty)} total • Real price from shop</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatPaise(pricePaise * qty)} total • Real price from shop</span>
               </div>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>

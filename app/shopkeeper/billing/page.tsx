@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatDate } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, formatDate } from '@/lib/utils/helpers';
 import { FileText, Download, Receipt } from 'lucide-react';
 
 export default function BillingPage() {
@@ -72,7 +72,7 @@ export default function BillingPage() {
                     <td style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 500 }}>{o.invoiceNumber}</td>
                     <td><span style={{ fontFamily: 'monospace', fontSize: '13px' }}>#{o.orderNumber}</span></td>
                     <td><div style={{ fontWeight: 500, fontSize: '14px' }}>{o.customer?.name}</div><div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{o.customer?.phone}</div></td>
-                    <td style={{ fontWeight: 600 }}>{formatCurrency(o.total)}</td>
+                    <td style={{ fontWeight: 600 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</td>
                     <td style={{ fontSize: '12px' }}>{formatDate(o.createdAt)}</td>
                     <td><span className="badge badge-success">{o.paymentStatus || 'Paid'}</span></td>
                     <td><a href={`/api/orders/${o.id}/invoice`} target="_blank" className="btn btn-secondary btn-sm" style={{ borderRadius: 6 }}><Download size={14} />PDF</a></td>

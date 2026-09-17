@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatCurrency, formatDate } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, formatDate } from '@/lib/utils/helpers';
 import { QrCode, Package, Check } from 'lucide-react';
 
 export default function ShopkeeperOrderDetail() {
@@ -123,7 +123,7 @@ export default function ShopkeeperOrderDetail() {
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-                <span>Total</span><span>{formatCurrency(order.total)}</span>
+                <span>Total</span><span>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</span>
               </div>
             </div>
           </div>

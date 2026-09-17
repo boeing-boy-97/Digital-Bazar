@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json(createErrorResponse('ORDER_CANCELLED', `Order is ${order.status}, cannot pickup`, requestId, 400), { status: 400 });
     }
 
-    // Validate QR token exists and valid
+    // Validate QR token exists and valid - single-use, expiry per point 37
     if (order.qrToken !== qrToken) {
       logStructured({
         requestId,
@@ -88,33 +88,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json(createErrorResponse('INVALID_QR_TOKEN', 'Invalid QR token', requestId, 400), { status: 400 });
     }
 
+    // Check expiry - 15 min per spec
+    if ((order as any).qrExpiry && new Date() > new Date((order as any).qrExpiry)) {
+      return NextResponse.json(createErrorResponse('QR_EXPIRED', 'QR token expired - please regenerate', requestId, 400, { expiredAt: (order as any).qrExpiry }), { status: 400 });
+    }
+
+    // Check single-use - second scan fail per point 37
+    if ((order as any).qrUsed) {
+      return NextResponse.json(createErrorResponse('QR_ALREADY_USED', 'QR token already used - order already verified', requestId, 400), { status: 400 });
+    }
+
     // Validate order number matches - prevents wrong order scan
     if (order.orderNumber !== orderNumber) {
       return NextResponse.json(createErrorResponse('ORDER_NUMBER_MISMATCH', 'Order number mismatch', requestId, 400), { status: 400 });
     }
 
-    // Validate order belongs to this shop - tenant isolation
-    // Already checked via order.shop, but double-check QR contains shopId if provided as JSON
-    try {
-      const parsedQR = JSON.parse(qrToken);
-      if (parsedQR.shopId && parsedQR.shopId !== order.shopId) {
-        return NextResponse.json(createErrorResponse('WRONG_SHOP', 'QR belongs to different shop', requestId, 400), { status: 400 });
-      }
-    } catch {
-      // qrToken is plain token, not JSON - okay
-    }
-
-    // Validate current status is READY_FOR_PICKUP or OUT_FOR_DELIVERY - not arbitrary
+    // Validate current status is READY_FOR_PICKUP or OUT_FOR_DELIVERY - not arbitrary per point 31
     if (order.status !== 'READY_FOR_PICKUP' && order.status !== 'OUT_FOR_DELIVERY') {
       return NextResponse.json(
         createErrorResponse('NOT_READY', `Order not ready for pickup. Current status: ${order.status}`, requestId, 400, { currentStatus: order.status }),
         { status: 400 }
       );
     }
-
-    // Check token not already used - we use status COMPLETED as redeemed marker
-    // In more advanced: add qrRedeemedAt field, but COMPLETED check suffices for MVP
-    // Also check status history for duplicate COMPLETED
 
     // Audit log for verification
     await prisma.auditLog.create({
@@ -145,11 +140,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         id: order.id,
         orderNumber: order.orderNumber,
         customer: { name: order.customer.name, phone: order.customer.phone, email: order.customer.email },
-        total: order.total,
-        subtotal: order.subtotal,
-        discount: order.discount,
-        tax: order.tax,
-        items: order.items.map(i => ({ productName: i.productName, quantity: i.quantity, unit: i.unit, subtotal: i.subtotal, sku: i.sku })),
+        totalPaise: (order as any).totalPaise,
+        subtotalPaise: (order as any).subtotalPaise,
+        discountPaise: (order as any).discountPaise,
+        taxPaise: (order as any).taxPaise,
+        items: order.items.map((i: any) => ({ productName: i.productName, quantity: i.quantity, unit: i.unit, subtotalPaise: i.subtotalPaise, unitPricePaise: i.unitPricePaise, sku: i.sku })),
         status: order.status,
         paymentMethod: order.paymentMethod,
         paymentStatus: order.paymentStatus,
@@ -157,7 +152,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       },
       message: 'QR verified successfully - ready for handover',
       requestId,
-      nextAction: 'Mark order as COMPLETED after handover and payment verification'
+      nextAction: 'Mark order as COMPLETED after handover and payment verification - QR will be marked used, inventory finalized, audit logged, invoice generated per point 37'
     });
 
   } catch (e: any) {

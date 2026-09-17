@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { EliteHeader } from '@/components/layout/EliteHeader';
 import { EliteFooter } from '@/components/layout/EliteFooter';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Package, ShieldCheck, Clock, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
@@ -54,18 +54,26 @@ export default function CartPage() {
   };
 
   const calcTotals = (items: any[]) => {
-    let subtotal = 0, discount = 0, tax = 0;
+    let subtotalPaise = 0, discountPaise = 0, taxPaise = 0;
     for (const item of items) {
-      const price = item.product.price;
+      const pricePaise = item.product.pricePaise ?? (item.product.price != null ? Math.round(item.product.price * 100) : 0);
       const qty = item.quantity;
-      const disc = (item.product.discount || 0) / 100 * price * qty;
-      const after = price * qty - disc;
-      const t = (item.product.taxRate || 0) / 100 * after;
-      subtotal += price * qty;
-      discount += disc;
-      tax += t;
+      const priceTotalPaise = pricePaise * qty;
+      const discPaise = Math.round(priceTotalPaise * (item.product.discount || 0) / 100);
+      const afterPaise = priceTotalPaise - discPaise;
+      const tPaise = Math.round(afterPaise * (item.product.taxRate || 0) / 100);
+      subtotalPaise += priceTotalPaise;
+      discountPaise += discPaise;
+      taxPaise += tPaise;
     }
-    return { subtotal, discount, tax, total: subtotal - discount + tax };
+    const totalPaise = subtotalPaise - discountPaise + taxPaise;
+    return { 
+      subtotal: fromPaise(subtotalPaise), 
+      discount: fromPaise(discountPaise), 
+      tax: fromPaise(taxPaise), 
+      total: fromPaise(totalPaise),
+      subtotalPaise, discountPaise, taxPaise, totalPaise
+    };
   };
 
   if (loading) {
@@ -136,7 +144,7 @@ export default function CartPage() {
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                             <span>{item.product.brand}</span>
                             <span>•</span>
-                            <span>{formatCurrency(item.product.price)} / {item.product.unit}</span>
+                            <span>{formatPaise(item.product.pricePaise ?? Math.round((item.product.price||0)*100))} / {item.product.unit}</span>
                             <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', borderRadius: 100, padding: '2px 6px', fontSize: 10, fontWeight: 600 }}>Real stock</span>
                           </div>
                         </div>
@@ -145,16 +153,16 @@ export default function CartPage() {
                           <div style={{ width: 36, textAlign: 'center', fontSize: 13, fontWeight: 600 }} aria-live="polite">{item.quantity}</div>
                           <button aria-label="Increase quantity" onClick={() => updateQty(item.id, item.quantity + 1)} style={{ width: 36, height: 36, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={12} aria-hidden="true" /></button>
                         </div>
-                        <div style={{ width: 80, textAlign: 'right', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{formatCurrency(item.product.price * item.quantity)}</div>
+                        <div style={{ width: 80, textAlign: 'right', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{formatPaise((item.product.pricePaise ?? Math.round((item.product.price||0)*100)) * item.quantity)}</div>
                         <button aria-label={`Remove ${item.product.name} from cart`} onClick={() => removeItem(item.id)} style={{ width: 36, height: 36, border: '1px solid var(--border)', background: 'white', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={14} color="var(--text-tertiary)" aria-hidden="true" /></button>
                       </div>
                     ))}
                   </div>
                   <div style={{ padding: 20, background: 'var(--surface-muted)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}><span>Subtotal • Real shop price</span><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{formatCurrency(totals.subtotal)}</span></div>
-                    {totals.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#059669' }}><span>Discount</span><span>-{formatCurrency(totals.discount)}</span></div>}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}><span>Tax • GST included</span><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{formatCurrency(totals.tax)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16, paddingTop: 12, borderTop: '1px solid var(--border)', color: 'var(--text-primary)' }}><span>Total</span><span>{formatCurrency(totals.total)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}><span>Subtotal • Real shop price</span><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{formatPaise(totals.subtotalPaise)}</span></div>
+                    {totals.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#059669' }}><span>Discount</span><span>-{formatPaise(totals.discountPaise)}</span></div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}><span>Tax • GST included</span><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{formatPaise(totals.taxPaise)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16, paddingTop: 12, borderTop: '1px solid var(--border)', color: 'var(--text-primary)' }}><span>Total</span><span>{formatPaise(totals.totalPaise)}</span></div>
                     
                     <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 10, padding: 12, display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 4 }}>
                       <div style={{ width: 28, height: 28, background: '#E6F4F3', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden="true"><ShieldCheck size={14} color="#0F766E" /></div>
@@ -164,7 +172,7 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    <button onClick={() => placeOrder(cart.shopId)} disabled={placing === cart.shopId} style={{ marginTop: 8, background: placing === cart.shopId ? 'var(--text-tertiary)' : '#0F766E', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontWeight: 600, fontSize: 14, cursor: placing === cart.shopId ? 'not-allowed' : 'pointer', minHeight: 48, transition: 'all 0.2s ease', boxShadow: '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>{placing === cart.shopId ? 'Placing order...' : `Place order • ${formatCurrency(totals.total)} • Pickup`}</button>
+                    <button onClick={() => placeOrder(cart.shopId)} disabled={placing === cart.shopId} style={{ marginTop: 8, background: placing === cart.shopId ? 'var(--text-tertiary)' : '#0F766E', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontWeight: 600, fontSize: 14, cursor: placing === cart.shopId ? 'not-allowed' : 'pointer', minHeight: 48, transition: 'all 0.2s ease', boxShadow: '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>{placing === cart.shopId ? 'Placing order...' : `Place order • ${formatPaise(totals.totalPaise)} • Pickup`}</button>
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={10} aria-hidden="true" />Shop prepares while you travel</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={10} aria-hidden="true" />Pay at store or online</span>

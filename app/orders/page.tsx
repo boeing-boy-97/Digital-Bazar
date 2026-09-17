@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { BottomNav } from '@/components/common/BottomNav';
-import { formatCurrency, formatDate, orderStatusColor } from '@/lib/utils/helpers';
+import { formatCurrency, formatDate, orderStatusColor, formatPaise } from '@/lib/utils/helpers';
 import Link from 'next/link';
 
 export default function OrdersPage() {
@@ -71,7 +71,7 @@ export default function OrdersPage() {
                     </div>
                   </div>
                   <div className="order-card-footer">
-                    <span style={{ fontWeight: 600 }}>{formatCurrency(order.total)}</span>
+                    <span style={{ fontWeight: 600 }}>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</span>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{order.paymentMethod.replace(/_/g,' ')} • {order.paymentStatus}</span>
                   </div>
                 </Link>

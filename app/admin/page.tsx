@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
 import { Store, Clock, CheckCircle, TrendingUp, ShoppingBag, DollarSign } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
 
   const pendingShops = shops.filter(s=>s.status==='PENDING_REVIEW').length;
   const approvedShops = shops.filter(s=>s.status==='APPROVED').length;
-  const totalRevenue = orders.filter(o=>o.status==='COMPLETED').reduce((s,o)=>s+o.total,0);
+  const totalRevenue = orders.filter(o=>o.status==='COMPLETED').reduce((s, o) => s + (o.totalPaise ?? Math.round((o.total||0)*100)), 0);
   const platformCommission = totalRevenue * 0.05;
 
   return (
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <DollarSign size={12} /> Platform revenue
                   </div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, marginTop: 6 }}>{formatCurrency(platformCommission)}</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, marginTop: 6 }}>{formatPaise(Math.round(platformCommission))}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>5% commission</div>
                 </div>
                 <div style={{ width: 36, height: 36, background: 'var(--success-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Gross merchandise value</div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, marginTop: 6 }}>{formatCurrency(totalRevenue)}</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, marginTop: 6 }}>{formatPaise(totalRevenue)}</div>
                 </div>
                 <div style={{ width: 36, height: 36, background: 'var(--surface-muted)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <DollarSign size={18} color="var(--text-secondary)" />

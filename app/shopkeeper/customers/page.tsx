@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
 import { Users, ShoppingBag, Search } from 'lucide-react';
 
 export default function ShopCustomers() {
@@ -16,7 +16,7 @@ export default function ShopCustomers() {
     const id = o.customerId;
     if (!acc[id]) acc[id] = { id, name: o.customer?.name || 'Customer', phone: o.customer?.phone, orders: 0, total: 0, lastOrder: o.createdAt };
     acc[id].orders++;
-    acc[id].total+=o.total;
+    acc[id].total+=(o.totalPaise ?? Math.round((o.total||0)*100));
     if (new Date(o.createdAt) > new Date(acc[id].lastOrder)) acc[id].lastOrder = o.createdAt;
     return acc;
   }, {}));
@@ -82,7 +82,7 @@ export default function ShopCustomers() {
                       </div>
                     </td>
                     <td><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ShoppingBag size={12} />{c.orders}</span></td>
-                    <td style={{ fontWeight: 600 }}>{formatCurrency(c.total)}</td>
+                    <td style={{ fontWeight: 600 }}>{formatPaise(c.totalPaise ?? Math.round((c.total||0)*100))}</td>
                     <td>{formatCurrency(c.total/c.orders)}</td>
                     <td style={{ fontSize: '13px' }}>{new Date(c.lastOrder).toLocaleDateString()}</td>
                   </tr>

@@ -26,12 +26,18 @@ export async function POST(req: NextRequest) {
 
     const idempotencyKey = `pay_${orderId}_${Date.now()}`;
 
-    const razorpayOrder = await razorpayService.createOrder(order.total, order.orderNumber);
+    // Server retrieves current price - never trust frontend per point 24, 38
+    const amountPaise = (order as any).totalPaise;
+    if (!amountPaise || amountPaise <= 0) {
+      return NextResponse.json({ error: 'Invalid order amount' }, { status: 400 });
+    }
+
+    const razorpayOrder = await razorpayService.createOrder(amountPaise / 100, order.orderNumber);
 
     const payment = await prisma.payment.create({
       data: {
         orderId: order.id,
-        amount: order.total,
+        amountPaise,
         method: order.paymentMethod as any,
         status: 'CREATED',
         provider: 'razorpay',
@@ -44,7 +50,7 @@ export async function POST(req: NextRequest) {
       data: {
         paymentId: payment.id,
         type: 'ORDER_CREATED',
-        data: JSON.stringify(razorpayOrder)
+        data: JSON.stringify({ razorpayOrder, amountPaise, orderNumber: order.orderNumber })
       }
     });
 
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest) {
       payment,
       razorpayOrder,
       keyId: razorpayService.getPublicKey(),
-      amount: order.total * 100,
+      amount: amountPaise, // already paise for Razorpay
       currency: 'INR'
     });
   } catch (e: any) {

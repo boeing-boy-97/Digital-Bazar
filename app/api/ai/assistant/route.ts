@@ -119,11 +119,12 @@ export async function POST(req: NextRequest) {
           const orders = await prisma.order.findMany({
             where: { shopId: shop.id, createdAt: { gte: today }, status: { in: ['COMPLETED','DELIVERED'] } }
           });
-          const total = orders.reduce((sum, o) => sum + o.total, 0);
+          const totalPaise = orders.reduce((sum, o) => sum + (o as any).totalPaise, 0);
+          const total = totalPaise / 100;
           data = { todaySales: total, orderCount: orders.length };
           response = {
             type: 'business_insight',
-            message: `Today's sales: ₹${total.toFixed(2)} from ${orders.length} orders.`,
+            message: `Today's sales: ₹${total.toFixed(2)} (${totalPaise} paise) from ${orders.length} orders. from ${orders.length} orders.`,
             data
           };
         }

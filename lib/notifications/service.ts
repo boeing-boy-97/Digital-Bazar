@@ -186,7 +186,7 @@ export class NotificationService {
       },
       payment_received: {
         title: 'Payment Received',
-        message: `Payment for order #${order.orderNumber} received. Amount: ₹${order.total}. Invoice generated.`
+        message: `Payment for order #${order.orderNumber} received. Amount: ₹${(order as any).totalPaise ? ((order as any).totalPaise/100).toFixed(2) : (order as any).total}. Invoice generated.`
       },
       payment_failed: {
         title: 'Payment Failed',
@@ -229,7 +229,7 @@ export class NotificationService {
         orderId,
         type,
         title: 'New Order Received! 🔔',
-        message: message || `New order #${order?.orderNumber} - ₹${order?.total}. ${order?.items?.length || 0} items. Accept now to start zone-sorted preparation. Capacity check: ensure you can fulfill.`,
+        message: message || `New order #${order?.orderNumber} - ₹${(order as any)?.totalPaise ? ((order as any).totalPaise/100).toFixed(2) : (order as any)?.total}. ${order?.items?.length || 0} items. Accept now to start zone-sorted preparation. Capacity check: ensure you can fulfill.`,
         channels: ['in_app', 'push']
       });
 

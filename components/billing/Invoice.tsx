@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise, formatDate  } from '@/lib/utils/helpers';
 
 interface InvoiceProps {
   invoice: {
@@ -6,15 +6,7 @@ interface InvoiceProps {
     data: string; // JSON
     createdAt: string;
   };
-  order: {
-    orderNumber: string;
-    total: number;
-    subtotal: number;
-    discount: number;
-    tax: number;
-    paymentMethod: string;
-    createdAt: string;
-  };
+  order: any; // Supports both legacy total and new totalPaise per point 50
   shop: {
     name: string;
     address: string;
@@ -75,8 +67,8 @@ export function Invoice({ invoice, order, shop, customer }: InvoiceProps) {
             <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
               <td style={{ padding: '8px 0' }}><div style={{ fontWeight: 500 }}>{item.productName}</div><div style={{ fontSize: '11px', color: '#666' }}>{item.sku}</div></td>
               <td style={{ padding: '8px 0', textAlign: 'center' }}>{item.quantity} {item.unit}</td>
-              <td style={{ padding: '8px 0', textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</td>
-              <td style={{ padding: '8px 0', textAlign: 'right' }}>{formatCurrency(item.subtotal)}</td>
+              <td style={{ padding: '8px 0', textAlign: 'right' }}>{formatPaise((item as any).unitPricePaise ?? Math.round((item.unitPrice||0)*100))}</td>
+              <td style={{ padding: '8px 0', textAlign: 'right' }}>{formatPaise((item as any).subtotalPaise ?? Math.round((item.subtotal||0)*100))}</td>
             </tr>
           ))}
         </tbody>
@@ -84,10 +76,10 @@ export function Invoice({ invoice, order, shop, customer }: InvoiceProps) {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div style={{ width: 250 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: 'green' }}><span>Discount</span><span>-{formatCurrency(order.discount)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}><span>Tax</span><span>{formatCurrency(order.tax)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: 700, borderTop: '2px solid black', marginTop: 8 }}><span>Total</span><span>{formatCurrency(order.total)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}><span>Subtotal</span><span>{formatPaise((order as any).subtotalPaise ?? Math.round((order.subtotal||0)*100))}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: 'green' }}><span>Discount</span><span>-{formatPaise((order as any).discountPaise ?? Math.round((order.discount||0)*100))}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}><span>Tax</span><span>{formatPaise((order as any).taxPaise ?? Math.round((order.tax||0)*100))}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: 700, borderTop: '2px solid black', marginTop: 8 }}><span>Total</span><span>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</span></div>
         </div>
       </div>
 

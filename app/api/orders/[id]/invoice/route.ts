@@ -131,19 +131,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           <td><strong>${item.productName}</strong><br/><span style="font-size: 11px; color: #64748B;">SKU: ${item.sku} | Unit: ${item.unit} | Zone: ${item.storageZone || 'N/A'}</span></td>
           <td style="font-size: 11px;">${'HSN-'+(item.productId.slice(0,4) || '0000')}</td>
           <td>${item.quantity} ${item.unit}</td>
-          <td>₹${item.unitPrice.toFixed(2)}</td>
+          <td>₹${((item as any).unitPricePaise/100).toFixed(2)}</td>
           <td>${item.taxRate}%</td>
-          <td>₹${item.subtotal.toFixed(2)}</td>
+          <td>₹${((item as any).subtotalPaise/100).toFixed(2)}</td>
         </tr>
       `).join('')}
     </tbody>
   </table>
 
   <div class="totals">
-    <div><span>Subtotal:</span><span>₹${order.subtotal.toFixed(2)}</span></div>
-    <div><span>Discount:</span><span>-₹${order.discount.toFixed(2)}</span></div>
-    <div><span>Tax (GST):</span><span>₹${order.tax.toFixed(2)}</span></div>
-    <div class="total"><span>Total:</span><span>₹${order.total.toFixed(2)}</span></div>
+    <div><span>Subtotal:</span><span>₹${((order as any).subtotalPaise/100).toFixed(2)}</span></div>
+    <div><span>Discount:</span><span>-₹${((order as any).discountPaise/100).toFixed(2)}</span></div>
+    <div><span>Tax (GST):</span><span>₹${((order as any).taxPaise/100).toFixed(2)}</span></div>
+    <div class="total"><span>Total:</span><span>₹${((order as any).totalPaise/100).toFixed(2)}</span></div>
   </div>
 
   <div class="immutable-notice">
@@ -172,10 +172,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           shop: { name: order.shop.name, address: order.shop.address, gstin },
           customer: order.customer,
           items: order.items,
-          subtotal: order.subtotal,
-          discount: order.discount,
-          tax: order.tax,
-          total: order.total,
+          subtotalPaise: (order as any).subtotalPaise,
+          discountPaise: (order as any).discountPaise,
+          taxPaise: (order as any).taxPaise,
+          totalPaise: (order as any).totalPaise,
           paymentMethod: order.paymentMethod,
           immutable: true,
           requestId

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ShoppingBag, Clock, CheckCircle, AlertTriangle, TrendingUp, Package, ArrowRight } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
 import Link from 'next/link';
 
 export default function ShopkeeperDashboard() {
@@ -69,7 +69,7 @@ export default function ShopkeeperDashboard() {
         pending: allOrders.filter((o:any)=>o.status==='PENDING').length,
         preparing: allOrders.filter((o:any)=>o.status==='PREPARING').length,
         ready: allOrders.filter((o:any)=>o.status==='READY_FOR_PICKUP').length,
-        sales: completedToday.reduce((sum:any, o:any)=>sum+o.total,0),
+        sales: completedToday.reduce((sum:any, o:any) => sum + (o.totalPaise ?? Math.round((o.total||0)*100)), 0),
         lowStock: lowStock.length
       });
     } finally {
@@ -157,7 +157,7 @@ export default function ShopkeeperDashboard() {
                           <tr key={o.id}>
                             <td><Link href={`/shopkeeper/orders/${o.id}`} style={{ fontWeight: 600, color: 'var(--brand)', fontFamily: 'monospace', fontSize: '13px' }}>#{o.orderNumber}</Link></td>
                             <td><div style={{ fontWeight: 500, fontSize: '14px' }}>{o.customer?.name || 'Customer'}</div><div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{o.customer?.phone}</div></td>
-                            <td style={{ fontWeight: 600 }}>{formatCurrency(o.total)}</td>
+                            <td style={{ fontWeight: 600 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</td>
                             <td><span className={`badge badge-${o.status==='PENDING'?'warning':o.status==='READY_FOR_PICKUP'?'success':o.status==='COMPLETED'?'success':'info'}`}>{o.status.replace(/_/g, ' ')}</span></td>
                           </tr>
                         ))}

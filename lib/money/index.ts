@@ -66,7 +66,7 @@ export function calculateOrderTotals(items: { price: number; quantity: number; d
   };
 }
 
-// Format currency for display
+// Format currency for display - INR float
 export function formatINR(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -74,6 +74,18 @@ export function formatINR(amount: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount);
+}
+
+// Format paise (integer) directly to INR display - authoritative
+export function formatPaise(paise: number): string {
+  if (typeof paise !== 'number' || isNaN(paise)) return formatINR(0);
+  return formatINR(fromPaise(paise));
+}
+
+// Format any money: if >= 100 and integer, assume paise, else INR - safe fallback
+export function formatMoney(amountPaiseOrINR: number, isPaise: boolean = true): string {
+  if (isPaise) return formatPaise(amountPaiseOrINR);
+  return formatINR(amountPaiseOrINR);
 }
 
 // Validate money amount

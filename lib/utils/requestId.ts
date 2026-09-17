@@ -12,7 +12,7 @@ export function getRequestIdFromHeaders(headers: Headers): string {
 
 export interface StructuredLog {
   requestId: string;
-  timestamp: string;
+  timestamp?: string;
   level: 'info' | 'warn' | 'error';
   message: string;
   route?: string;
@@ -24,6 +24,7 @@ export interface StructuredLog {
 }
 
 export function logStructured(log: StructuredLog) {
+  if (!log.timestamp) log.timestamp = new Date().toISOString();
   // Never log sensitive: passwords, OTP, payment secrets, full card, sensitive tokens
   const sanitized = { ...log };
   if (sanitized.metadata) {

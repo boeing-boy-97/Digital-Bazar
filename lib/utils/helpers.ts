@@ -1,9 +1,24 @@
 export function formatCurrency(amount: number): string {
+  // Legacy: expects INR float - keep for backward compat
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 2
   }).format(amount);
+}
+
+export function formatPaise(paise: number): string {
+  if (typeof paise !== 'number' || isNaN(paise)) return formatCurrency(0);
+  const inr = Math.round(paise) / 100;
+  return formatCurrency(inr);
+}
+
+export function toPaise(inr: number): number {
+  return Math.round(inr * 100);
+}
+
+export function fromPaise(paise: number): number {
+  return Math.round(paise) / 100;
 }
 
 export function formatDate(date: Date | string): string {

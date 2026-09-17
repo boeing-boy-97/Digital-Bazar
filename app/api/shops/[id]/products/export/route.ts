@@ -44,8 +44,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       products: products.map(p=>({
         name: p.name,
         sku: p.sku,
-        price: p.price,
-        compareAtPrice: p.compareAtPrice,
+        pricePaise: (p as any).pricePaise,
+        price: (p as any).pricePaise/100,
+        compareAtPricePaise: (p as any).compareAtPricePaise,
+        compareAtPrice: (p as any).compareAtPricePaise ? (p as any).compareAtPricePaise/100 : null,
         stock: p.stock,
         unit: p.unit,
         category: p.category?.name,
@@ -68,8 +70,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const row = [
       `"${p.name.replace(/"/g,'""')}"`,
       p.sku,
-      p.price,
-      p.compareAtPrice || '',
+      (p as any).pricePaise/100,
+      ((p as any).compareAtPricePaise ? (p as any).compareAtPricePaise/100 : ""),
       p.stock,
       p.unit,
       p.category?.name || '',

@@ -31,9 +31,12 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 export function generateOTP(): string {
-  if (process.env.OTP_ENABLED === 'true' && process.env.OTP_TEST_CODE) {
+  // In production, NEVER return hardcoded test code per audit CRITICAL
+  if (process.env.NODE_ENV !== 'production' && process.env.OTP_ENABLED === 'true' && process.env.OTP_TEST_CODE) {
+    console.warn('[SECURITY] Using test OTP code - only allowed in non-production');
     return process.env.OTP_TEST_CODE;
   }
+  // Production: real random OTP
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
@@ -45,12 +48,30 @@ export function generateOrderNumber(): string {
 }
 
 export function generateQRToken(): string {
+  // Legacy simple token - kept for backward compat, but new secure token preferred
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let token = 'QR-';
   for (let i = 0; i < 12; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return token;
+}
+
+// Secure QR token with HMAC per point 37: single-use, expiry, auth, second scan fail
+export function generateSecureQRToken(orderId: string, shopId: string): { token: string; expiry: Date } {
+  const crypto = require('crypto');
+  const secret = process.env.JWT_SECRET || 'fallback-secret-min-32-chars-long';
+  const nonce = crypto.randomBytes(8).toString('hex');
+  const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min per spec
+  const payload = `${orderId}.${shopId}.${nonce}.${expiry.getTime()}`;
+  const hmac = crypto.createHmac('sha256', secret).update(payload).digest('hex').slice(0, 32);
+  const token = `QR-${nonce}-${hmac}`;
+  return { token, expiry };
+}
+
+export function verifySecureQRTokenFormat(token: string): boolean {
+  // Basic format check: QR-<nonce>-<hmac>
+  return /^QR-[a-f0-9]{16}-[a-f0-9]{32}$/.test(token);
 }
 
 export function generateInvoiceNumber(): string {

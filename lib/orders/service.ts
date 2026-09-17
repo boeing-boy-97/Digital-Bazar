@@ -201,11 +201,11 @@ export async function transitionOrder(
                 orderNumber: order.orderNumber,
                 shop: { name: order.shop.name, gstin: order.shop.gstin, address: order.shop.address },
                 customer: { name: order.customer.name },
-                items: order.items.map(i => ({ name: i.productName, qty: i.quantity, price: i.unitPrice, subtotal: i.subtotal })),
-                subtotal: order.subtotal,
-                tax: order.tax,
-                discount: order.discount,
-                total: order.total,
+                items: order.items.map((i:any) => ({ name: i.productName, qty: i.quantity, pricePaise: i.unitPricePaise, subtotalPaise: i.subtotalPaise })),
+                subtotalPaise: (order as any).subtotalPaise,
+                taxPaise: (order as any).taxPaise,
+                discountPaise: (order as any).discountPaise,
+                totalPaise: (order as any).totalPaise,
                 date: new Date().toISOString()
               })
             }

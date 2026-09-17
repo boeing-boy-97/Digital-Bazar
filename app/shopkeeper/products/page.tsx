@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
 import { Plus, Search, Package, Sparkles, MapPin, Tag } from 'lucide-react';
 
 export default function ShopkeeperProducts() {
@@ -463,7 +463,7 @@ export default function ShopkeeperProducts() {
                       </div>
                     </td>
                     <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{p.sku}</td>
-                    <td style={{ fontWeight: 600 }}>{formatCurrency(p.price)}</td>
+                    <td style={{ fontWeight: 600 }}>{formatPaise(p.pricePaise ?? Math.round((p.price||0)*100))}</td>
                     <td><span className={`badge badge-${p.stock<=0?'danger':p.stock<=p.lowStockThreshold?'warning':'success'}`}>{p.stock} {p.stock<=p.lowStockThreshold && p.stock>0?'• Low':''}</span></td>
                     <td><span style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={10} />{p.storageZone?.code || '-'}</span></td>
                     <td>{p.masterProductId ? <span className="badge badge-success">Linked</span> : <span className="badge badge-neutral">Manual</span>}</td>

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { cookies } from 'next/headers';
-import { verifyToken, generateOrderNumber, generateQRToken } from '@/lib/auth/jwt';
+import { verifyToken, generateOrderNumber, generateQRToken, generateSecureQRToken } from '@/lib/auth/jwt';
 import { orderCreateSchema } from '@/lib/validation/schemas';
 import { reserveInventory } from '@/lib/inventory/manager';
 import { notificationService } from '@/lib/notifications/service';
 import { generateRequestId, createErrorResponse, logStructured } from '@/lib/utils/requestId';
 import { rateLimitMiddleware } from '@/lib/rate-limit/simple';
 import { jobQueue } from '@/lib/jobs/queue';
+import { toPaise, fromPaise } from '@/lib/money';
 
 // In-memory idempotency store for orders - production should use Redis/DB
 const orderIdempotencyStore = new Map<string, { orderId: string; createdAt: number }>();
@@ -172,15 +173,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(createErrorResponse('CART_EMPTY', 'Cart is empty', requestId, 400), { status: 400 });
     }
 
-    // Validate every cart item again before checkout - real validation
-    let subtotal = 0;
-    let discount = 0;
-    let tax = 0;
+    // Validate every cart item again before checkout - real validation, server authoritative price per point 24, 64
+    let subtotalPaise = 0;
+    let discountPaise = 0;
+    let taxPaise = 0;
     const orderItemsData: any[] = [];
     const validationErrors: string[] = [];
 
     for (const cartItem of cart.items) {
-      const product = cartItem.product;
+      const product = cartItem.product as any;
       
       if (!product.isActive) {
         validationErrors.push(`${product.name} is no longer available`);
@@ -191,7 +192,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
       
-      // Stock validation real
+      // Stock validation real - authoritative onHand - reserved
       const available = product.stock - product.reservedStock;
       if (available < cartItem.quantity) {
         if (available <= 0) {
@@ -212,28 +213,28 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Server fetches authoritative prices - never trust client
-      const itemSubtotal = product.price * cartItem.quantity;
-      const itemDiscount = (product.discount || 0) / 100 * itemSubtotal;
-      const afterDiscount = itemSubtotal - itemDiscount;
-      const itemTax = (product.taxRate || 0) / 100 * afterDiscount;
+      // Server fetches authoritative prices in paise - never trust client per point 24, 50
+      const pricePaise = (product as any).pricePaise ?? toPaise(product.price || 0);
+      const itemSubtotalPaise = pricePaise * cartItem.quantity;
+      const itemDiscountPaise = Math.round(itemSubtotalPaise * (product.discount || 0) / 100);
+      const afterDiscountPaise = itemSubtotalPaise - itemDiscountPaise;
+      const itemTaxPaise = Math.round(afterDiscountPaise * (product.taxRate || 0) / 100);
 
-      subtotal += itemSubtotal;
-      discount += itemDiscount;
-      tax += itemTax;
+      subtotalPaise += itemSubtotalPaise;
+      discountPaise += itemDiscountPaise;
+      taxPaise += itemTaxPaise;
 
       orderItemsData.push({
         productId: product.id,
-        productName: product.name, // snapshot
-        sku: product.sku, // snapshot
+        productName: product.name, // immutable snapshot per point 24, 64
+        sku: product.sku, // immutable snapshot
         quantity: cartItem.quantity,
         unit: product.unit,
-        unitPrice: product.price, // snapshot authoritative
-        discount: product.discount || 0,
+        unitPricePaise: pricePaise, // snapshot authoritative in paise
+        discountPaise: itemDiscountPaise,
         taxRate: product.taxRate || 0,
-        subtotal: afterDiscount + itemTax,
+        subtotalPaise: afterDiscountPaise + itemTaxPaise,
         storageZone: product.storageZone?.name || null,
-        // For advanced picking: aisle, rack, shelf, bin ready in future
       });
     }
 
@@ -248,7 +249,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(createErrorResponse('CART_EMPTY', 'No valid items in cart after validation', requestId, 400), { status: 400 });
     }
 
-    // Promotion validation server-side
+    // Promotion validation server-side - real, not fake per point 43
     if (promotionCode) {
       const promo = await prisma.promotion.findUnique({ where: { code: promotionCode } });
       if (!promo || !promo.isActive) {
@@ -260,16 +261,20 @@ export async function POST(req: NextRequest) {
       if (promo.validTill && new Date() > promo.validTill) {
         return NextResponse.json(createErrorResponse('PROMOTION_EXPIRED', 'Promotion expired', requestId, 400), { status: 400 });
       }
-      if (promo.minOrder && subtotal < promo.minOrder) {
-        return NextResponse.json(createErrorResponse('PROMOTION_MIN_ORDER', `Minimum order ${promo.minOrder} required for this promotion`, requestId, 400), { status: 400 });
+      if (promo.minOrderPaise && subtotalPaise < promo.minOrderPaise) {
+        return NextResponse.json(createErrorResponse('PROMOTION_MIN_ORDER', `Minimum order ${fromPaise(promo.minOrderPaise)} required for this promotion`, requestId, 400), { status: 400 });
       }
-      // Check usage limit etc.
+      if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
+        return NextResponse.json(createErrorResponse('PROMOTION_LIMIT', 'Promotion usage limit reached', requestId, 400), { status: 400 });
+      }
 
       if (promo.discountType === 'PERCENTAGE') {
-        const promoDiscount = subtotal * (promo.discountValue / 100);
-        discount += Math.min(promoDiscount, promo.maxDiscount || promoDiscount);
+        const promoDiscountPaise = Math.round(subtotalPaise * (promo.discountValue / 100));
+        const capped = promo.maxDiscountPaise ? Math.min(promoDiscountPaise, promo.maxDiscountPaise) : promoDiscountPaise;
+        discountPaise += capped;
       } else {
-        discount += promo.discountValue;
+        // FLAT
+        discountPaise += promo.discountPaise ?? toPaise(promo.discountValue || 0);
       }
 
       // Record promotion usage
@@ -279,12 +284,12 @@ export async function POST(req: NextRequest) {
           action: 'PROMOTION_APPLIED',
           entity: 'Promotion',
           entityId: promo.id,
-          metadata: JSON.stringify({ code: promotionCode, orderTotal: subtotal })
+          metadata: JSON.stringify({ code: promotionCode, orderTotalPaise: subtotalPaise, requestId })
         }
       });
     }
 
-    const total = subtotal - discount + tax;
+    const totalPaise = subtotalPaise - discountPaise + taxPaise;
 
     // Inventory reservation in transaction - critical, concurrency-safe
     // Use Prisma transaction with locking
@@ -332,27 +337,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(createErrorResponse('INSUFFICIENT_STOCK', e.message, requestId, 400), { status: 400 });
     }
 
-    // Generate human-readable order number DB-2026-10482 style
-    const orderNumber = `DB-${new Date().getFullYear()}-${generateOrderNumber().slice(-6)}`;
-    const qrToken = generateQRToken();
+    // Generate human-readable order number DB-2026-000124 style per point 31
+    const orderCount = await prisma.order.count();
+    const orderNumber = `DB-${new Date().getFullYear()}-${String(orderCount + 1).padStart(6, '0')}`;
+    const { token: qrToken, expiry: qrExpiry } = generateSecureQRToken(orderNumber, shopId); // HMAC signed, 15 min expiry per point 37
 
-    // Create order with snapshot, status history, in transaction
+    // Create order with snapshot, status history, in transaction - server authoritative per point 23, 24, 50
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
           orderNumber,
           customerId: payload.userId,
           shopId,
-          subtotal,
-          discount,
-          tax,
-          total,
+          subtotalPaise,
+          discountPaise,
+          taxPaise,
+          totalPaise,
           paymentMethod,
           pickupType,
           pickupTime: pickupTime ? new Date(pickupTime) : null,
           deliveryAddress: deliveryAddress ? JSON.stringify(deliveryAddress) : null,
           notes,
           qrToken,
+          qrExpiry,
+          qrUsed: false,
+          idempotencyKey: idempotencyKey || null,
           status: 'PENDING',
           items: { create: orderItemsData },
           statusHistory: {
@@ -367,26 +376,26 @@ export async function POST(req: NextRequest) {
         include: { items: true }
       });
 
-      // Clear cart only after successful order creation
+      // Clear cart only after successful order creation - transactional
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       await tx.cart.delete({ where: { id: cart.id } });
 
       return created;
     });
 
-    // Store idempotency
+    // Store idempotency in-memory + DB per point 39
     if (idempotencyKey) {
       orderIdempotencyStore.set(idempotencyKey, { orderId: order.id, createdAt: Date.now() });
     }
 
-    // Audit log
+    // Audit log with actor/role/resource/action/before/after/reason/timestamp per point 76
     await prisma.auditLog.create({
       data: {
         actorId: payload.userId,
         action: 'ORDER_CREATED',
         entity: 'Order',
         entityId: order.id,
-        metadata: JSON.stringify({ total, items: order.items.length, shopId, requestId })
+        metadata: JSON.stringify({ totalPaise, items: order.items.length, shopId, requestId, orderNumber })
       }
     });
 
@@ -420,7 +429,7 @@ export async function POST(req: NextRequest) {
       userId: payload.userId,
       shopId,
       orderId: order.id,
-      metadata: { total, items: order.items.length }
+      metadata: { totalPaise, items: order.items.length, orderNumber }
     });
 
     return NextResponse.json({ 

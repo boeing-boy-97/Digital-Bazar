@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
   }
 
   const completed = orders.filter(o=>o.status==='COMPLETED');
-  const totalSales = completed.reduce((s,o)=>s+o.total,0);
+  const totalSales = completed.reduce((s, o) => s + (o.totalPaise ?? Math.round((o.total||0)*100)), 0);
   const avgOrder = completed.length ? totalSales / completed.length : 0;
   const cancellationRate = orders.length ? (orders.filter(o=>o.status==='CANCELLED').length / orders.length * 100) : 0;
 
@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
     });
     return {
       date: date.toLocaleDateString('en-IN', { weekday: 'short' }),
-      sales: dayOrders.reduce((s,o)=>s+o.total,0),
+      sales: dayOrders.reduce((s, o) => s + (o.totalPaise ?? Math.round((o.total||0)*100)), 0),
       count: dayOrders.length
     };
   });

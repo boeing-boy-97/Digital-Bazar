@@ -129,23 +129,26 @@ model Shop {
   longitude         Float?
   phone             String?
   email             String?
-  openingHours      String?
-  closingHours      String?
-  holidays          String?
-  status            String     @default("PENDING_REVIEW")
+  // Structured business hours - replaces loosely stored openingHours/closingHours/holidays per point 15
+  timezone          String     @default("Asia/Kolkata")
+  status            String     @default("PENDING_REVIEW") // PENDING_REVIEW→APPROVED→OPEN/CLOSED/TEMPORARILY_CLOSED/SUSPENDED
   rejectionReason   String?
   isPickupEnabled   Boolean    @default(true)
   isDeliveryEnabled Boolean    @default(false)
-  preparationTimeMin Int       @default(15)
-  rating            Float      @default(0)
+  preparationTimeMin Int       @default(15) // Default 15min, configurable
+  maxActiveOrders   Int?       // Shop capacity per point 32
+  rating            Float      @default(0) // Denormalized but updated via review
   reviewCount       Int        @default(0)
   gstin             String?
-  businessInfo      String?
-  bankDetails       String?    // JSON for bank/payment details
+  businessInfo      String?    // JSON
+  bankDetails       String?    // JSON
   completionPercent Int        @default(0)
+  lastInventoryUpdate DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
+  businessHours     ShopBusinessHours[]
+  holidays          ShopHoliday[]
   members           ShopMember[]
   categories        Category[]
   products          Product[]
@@ -154,6 +157,44 @@ model Shop {
   inventoryTransactions InventoryTransaction[]
   reviews           Review[]
   promotions        Promotion[]
+
+  @@index([status])
+  @@index([city])
+  @@index([pincode])
+  @@index([category])
+  @@index([status, city])
+  @@index([status, pincode])
+}
+
+model ShopBusinessHours {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0=Sunday, 1=Monday, ... 6=Saturday
+  openTime  String?  // HH:MM e.g., "09:00", null if closed
+  closeTime String?  // HH:MM e.g., "21:00", null if closed
+  isClosed  Boolean  @default(false)
+  isOvernight Boolean @default(false) // For overnight stores per point 15
+  sortOrder Int      @default(0) // For multiple intervals per day per point 15
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, dayOfWeek, sortOrder])
+  @@index([shopId])
+}
+
+model ShopHoliday {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  date        DateTime // Specific date
+  name        String?  // e.g., "Diwali", "Weekly off"
+  isWeekly    Boolean  @default(false) // Weekly holiday
+  isClosed    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@unique([shopId, date])
+  @@index([shopId])
 }
 
 model ShopMember {
@@ -162,11 +203,13 @@ model ShopMember {
   shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permission String
+  permission String   // Should be enum: OWNER, MANAGER, PICKER, CASHIER per point 64
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
 
   @@unique([shopId, userId])
+  @@index([shopId])
+  @@index([userId])
 }
 
 model Category {
@@ -214,20 +257,22 @@ model Product {
   storageZone       StorageZone? @relation(fields: [storageZoneId], references: [id])
   name              String
   slug              String
-  sku               String   @unique
+  sku               String
   barcode           String?
   description       String?
   brand             String?
   unit              String   @default("piece")
   size              String?
   weight            String?
-  price             Float
-  compareAtPrice    Float?
-  discount          Float?   @default(0)
-  taxRate           Float    @default(0)
+  // Money in paise (integer) to avoid floating point errors - authoritative
+  pricePaise        Int      // Price in paise, e.g., 19900 = ₹199.00
+  compareAtPricePaise Int?
+  discount          Float?   @default(0) // Percentage, not money
+  taxRate           Float    @default(0) // Percentage
   hsnCode           String?
-  stock             Int      @default(0)
-  reservedStock     Int      @default(0)
+  // Inventory: onHand authoritative, reserved authoritative, available derived = onHand - reserved
+  stock             Int      @default(0) // onHand
+  reservedStock     Int      @default(0) // reserved
   minOrderQty       Int      @default(1)
   maxOrderQty       Int?
   lowStockThreshold Int      @default(10)
@@ -245,9 +290,12 @@ model Product {
   favorites         Favorite[]
   reviews           Review[]
 
+  @@unique([shopId, sku])
   @@index([shopId])
   @@index([name])
   @@index([masterProductId])
+  @@index([isActive])
+  @@index([shopId, isActive])
 }
 
 model ProductVariant {
@@ -257,12 +305,14 @@ model ProductVariant {
   masterVariantId   String?
   masterVariant     MasterProductVariant? @relation(fields: [masterVariantId], references: [id])
   name              String
-  sku               String   @unique
-  price             Float
+  sku               String
+  pricePaise        Int      // Price in paise
   stock             Int      @default(0)
   reservedStock     Int      @default(0)
   attributes        String?
   createdAt         DateTime @default(now())
+
+  @@unique([productId, sku])
 }
 
 model ProductImage {
@@ -273,17 +323,6 @@ model ProductImage {
   alt       String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-}
-
-model Inventory {
-  id        String   @id @default(cuid())
-  productId String   @unique
-  available Int      @default(0)
-  reserved  Int      @default(0)
-  sold      Int      @default(0)
-  incoming  Int      @default(0)
-  damaged   Int      @default(0)
-  updatedAt DateTime @updatedAt
 }
 
 model InventoryTransaction {
@@ -347,24 +386,28 @@ model CartItem {
 
 model Order {
   id              String      @id @default(cuid())
-  orderNumber     String      @unique
+  orderNumber     String      @unique // Human-friendly DB-2026-000124
   customerId      String
   customer        User        @relation("CustomerOrders", fields: [customerId], references: [id])
   shopId          String
   shop            Shop        @relation(fields: [shopId], references: [id])
-  status          String      @default("PENDING")
-  subtotal        Float
-  discount        Float       @default(0)
-  tax             Float       @default(0)
-  total           Float
+  status          String      @default("PENDING") // PENDING→ACCEPTED→PREPARING→READY_FOR_PICKUP→COMPLETED or REJECTED
+  // Money in paise - authoritative, integer
+  subtotalPaise   Int
+  discountPaise   Int         @default(0)
+  taxPaise        Int         @default(0)
+  totalPaise      Int
   paymentMethod   String      @default("PAY_AT_STORE")
   paymentStatus   String      @default("PENDING")
   pickupType      String      @default("PICKUP")
   pickupTime      DateTime?
   deliveryAddress String?
   notes           String?
-  qrToken         String      @unique
+  qrToken         String      @unique // Short-lived signed HMAC, single-use
+  qrExpiry        DateTime?   // QR expiry 15min
+  qrUsed          Boolean     @default(false)
   preparationProgress Int    @default(0)
+  idempotencyKey  String?     @unique // For idempotent order creation
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -376,6 +419,8 @@ model Order {
 
   @@index([shopId, status])
   @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -384,19 +429,20 @@ model OrderItem {
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId     String
   product       Product  @relation(fields: [productId], references: [id])
-  productName   String
-  sku           String
+  productName   String // Immutable snapshot
+  sku           String // Immutable snapshot
   variantName   String?
   quantity      Int
   unit          String
-  unitPrice     Float
-  discount      Float    @default(0)
-  taxRate       Float    @default(0)
-  subtotal      Float
+  // Money in paise - immutable snapshots per point 24, 64
+  unitPricePaise Int
+  discountPaise Int     @default(0)
+  taxRate       Float   @default(0)
+  subtotalPaise Int
   storageZone   String?
-  isPicked      Boolean  @default(false)
+  isPicked      Boolean @default(false)
   pickedAt      DateTime?
-  pickedBy      String?
+  pickedBy      String? // picker identity
   createdAt     DateTime @default(now())
 }
 
@@ -415,18 +461,22 @@ model Payment {
   id              String        @id @default(cuid())
   orderId         String
   order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount          Float
+  amountPaise     Int           // Amount in paise
   method          String
-  status          String        @default("PENDING")
+  status          String        @default("PENDING") // PENDING→CAPTURED→FAILED→REFUNDED
   provider        String        @default("razorpay")
   providerOrderId String?
   providerPaymentId String?
-  signature       String?
+  signature       String?       // Razorpay signature
+  webhookSignature String?      // Webhook signature
   idempotencyKey  String?       @unique
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   events          PaymentEvent[]
+
+  @@index([orderId])
+  @@index([status])
 }
 
 model PaymentEvent {
@@ -515,21 +565,27 @@ model Commission {
 }
 
 model Promotion {
-  id          String   @id @default(cuid())
-  shopId      String?
-  shop        Shop?    @relation(fields: [shopId], references: [id])
-  code        String   @unique
-  description String?
-  discountType String
-  discountValue Float
-  minOrder    Float?
-  maxDiscount Float?
-  isActive    Boolean  @default(true)
-  validFrom   DateTime?
-  validTill   DateTime?
-  usageCount  Int      @default(0)
-  usageLimit  Int?
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  shopId          String?
+  shop            Shop?    @relation(fields: [shopId], references: [id])
+  code            String   @unique
+  description     String?
+  discountType    String   // PERCENTAGE or FLAT
+  discountValue   Float    // For PERCENTAGE: 0-100, for FLAT: value in paise? Keep Float for percentage, but service will handle paise
+  discountPaise   Int?     // For FLAT discount in paise
+  minOrderPaise   Int?     // Minimum order in paise
+  maxDiscountPaise Int?    // Max discount cap in paise for percentage
+  isActive        Boolean  @default(true)
+  validFrom       DateTime?
+  validTill       DateTime?
+  usageCount      Int      @default(0)
+  usageLimit      Int?
+  perUserLimit    Int?     // Per user limit per point 43
+  eligibleProducts String? // JSON array of productIds or categoryIds per point 43
+  createdAt       DateTime @default(now())
+
+  @@index([code])
+  @@index([isActive])
 }
 
 model AuditLog {

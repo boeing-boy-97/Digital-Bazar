@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/common/Header';
 import { BottomNav } from '@/components/common/BottomNav';
-import { formatCurrency, formatDate, orderStatusColor } from '@/lib/utils/helpers';
+import { formatCurrency, formatDate, orderStatusColor, formatPaise } from '@/lib/utils/helpers';
 import { QrCode, Clock, Package, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function OrderDetailPage() {
@@ -101,7 +101,7 @@ export default function OrderDetailPage() {
               <div className="card">
                 <div className="card-header">
                   <div className="card-title">Order Items • {order.items.length} products</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatCurrency(order.total)}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</div>
                 </div>
                 <div className="card-body">
                   {Object.keys(sortedByZone).length > 0 ? (
@@ -135,7 +135,7 @@ export default function OrderDetailPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}><span>Discount</span><span>-{formatCurrency(order.discount)}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tax</span><span>{formatCurrency(order.tax)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '16px', paddingTop: 8, borderTop: '1px solid var(--border)' }}><span>Total</span><span>{formatCurrency(order.total)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '16px', paddingTop: 8, borderTop: '1px solid var(--border)' }}><span>Total</span><span>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</span></div>
                   </div>
                 </div>
               </div>
