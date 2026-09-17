@@ -1,0 +1,21 @@
+{
+  "name": "Digital Bazar - Select Before You Arrive",
+  "short_name": "Digital Bazar",
+  "description": "Avoid the crowd. Select your products before you arrive.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F766E",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
