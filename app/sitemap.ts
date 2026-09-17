@@ -1,17 +1,30 @@
 import { MetadataRoute } from 'next';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://digital-bazar-three.vercel.app';
   
-  // Real sitemap - only public routes, no private shopkeeper/admin/api/cart/orders
-  // Production uses NEXT_PUBLIC_APP_URL env, fail-fast if not set in prod via validation
-  return [
-    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: `${baseUrl}/shops`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
-    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { url: `${baseUrl}/auth/login`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/auth/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    // Shop pages are dynamic - in production would fetch real shops from DB and add to sitemap
-    // For now, static public routes only, real implementation would query prisma.shop.findMany({ where: { status: 'APPROVED' } })
+  const staticRoutes = [
+    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 1 },
+    { url: `${baseUrl}/shops`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
+    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
+    { url: `${baseUrl}/categories`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
+    { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/faq`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.3 },
+    { url: `${baseUrl}/refunds`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.3 },
+    { url: `${baseUrl}/shipping`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.3 },
+    { url: `${baseUrl}/grievance`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.3 },
+    { url: `${baseUrl}/c/medical`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
+    { url: `${baseUrl}/c/hardware`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
+    { url: `${baseUrl}/c/building-material`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
+    { url: `${baseUrl}/c/electrical`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
+    { url: `${baseUrl}/c/plumbing`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
+    { url: `${baseUrl}/c/paint`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
+    { url: `${baseUrl}/c/grocery`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
+    { url: `${baseUrl}/c/electronics`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
   ];
+
+  return [...staticRoutes];
 }

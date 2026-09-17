@@ -1,11 +1,23 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Clock, Package, Store, ArrowRight, Star, ShieldCheck, Truck, Check, Sparkles, Users, Award, TrendingUp, Layers } from 'lucide-react';
+import { Search, MapPin, Clock, Package, Store, ArrowRight, ShieldCheck, Check, Layers, TrendingUp, Award, Users, Timer, Building2, Wrench, Pill, Lightbulb, Droplets, Paintbrush, ShoppingCart, Smartphone } from 'lucide-react';
 import { EliteHeader } from '@/components/layout/EliteHeader';
 import { EliteFooter } from '@/components/layout/EliteFooter';
 import { ShopCard } from '@/components/customer/ShopCard';
 import { ProductCard } from '@/components/customer/ProductCard';
+
+const categoryIcons: Record<string, any> = {
+  Medical: Pill,
+  Hardware: Wrench,
+  'Building Material': Building2,
+  Electrical: Lightbulb,
+  Plumbing: Droplets,
+  Paint: Paintbrush,
+  Grocery: ShoppingCart,
+  Electronics: Smartphone,
+  General: Package,
+};
 
 export default function HomePage() {
   const [shops, setShops] = useState<any[]>([]);
@@ -13,6 +25,7 @@ export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [counts, setCounts] = useState({ shops: 0, products: 0, categories: 0 });
 
   useEffect(() => {
     fetchData();
@@ -25,24 +38,37 @@ export default function HomePage() {
         fetch('/api/shops').then(r => r.json()).catch(() => ({ shops: [] })),
         fetch('/api/products?limit=8').then(r => r.json()).catch(() => ({ products: [] }))
       ]);
+      
       const realShops = (shopsRes.shops || []).slice(0, 3);
       setShops(realShops);
+      setCounts({
+        shops: shopsRes.shops?.length || 0,
+        products: productsRes.total || productsRes.products?.length || 0,
+        categories: new Set((shopsRes.shops || []).map((s: any) => s.category)).size
+      });
 
       const categoryMap = new Map();
-      realShops.forEach((shop: any) => {
+      (shopsRes.shops || []).forEach((shop: any) => {
         if (shop.category && !categoryMap.has(shop.category)) {
-          categoryMap.set(shop.category, { name: shop.category, count: 1 });
+          categoryMap.set(shop.category, { name: shop.category, count: 0, shops: 0 });
+        }
+        if (shop.category) {
+          categoryMap.get(shop.category).shops++;
         }
       });
       (productsRes.products || []).forEach((p: any) => {
         const catName = p.category?.name || 'General';
-        if (!categoryMap.has(catName)) categoryMap.set(catName, { name: catName, count: 0 });
+        if (!categoryMap.has(catName)) categoryMap.set(catName, { name: catName, count: 0, shops: 0 });
         categoryMap.get(catName).count++;
       });
-      const cats = Array.from(categoryMap.values()).sort((a, b) => b.count - a.count).slice(0, 6);
+      
+      const cats = Array.from(categoryMap.values())
+        .sort((a, b) => (b.count + b.shops) - (a.count + a.shops))
+        .slice(0, 8);
       setCategories(cats);
       setProducts((productsRes.products || []).slice(0, 8));
     } catch {
+      // Fallback to empty states - honest
     } finally {
       setLoading(false);
     }
@@ -72,117 +98,321 @@ export default function HomePage() {
 
   return (
     <div style={{ background: 'var(--surface)', minHeight: '100vh' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        h1, h2, h3 { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
-        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
-        @media (max-width: 768px) { .container { padding: 0 20px; } }
-        @media (max-width: 480px) { .container { padding: 0 16px; } }
-      `}</style>
-
       <EliteHeader />
 
-      <main>
-        {/* Hero */}
-        <section style={{ background: 'linear-gradient(180deg, #F0FAF9 0%, #FFFFFF 100%)', borderBottom: '1px solid var(--border)', overflow: 'hidden', position: 'relative' }}>
-          <div className="container" style={{ paddingTop: 72, paddingBottom: 72, position: 'relative' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 64, alignItems: 'center' }} className="hero-grid">
+      <main id="main-content">
+        {/* Hero - clean, benefit-driven, no fake stats */}
+        <section style={{ 
+          background: 'linear-gradient(180deg, #F0FAF9 0%, #FFFFFF 100%)', 
+          borderBottom: '1px solid var(--border)', 
+          overflow: 'hidden', 
+          position: 'relative' 
+        }}>
+          {/* Subtle pattern */}
+          <div aria-hidden="true" style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(circle at 30% 20%, rgba(15, 118, 110, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(15, 118, 110, 0.04) 0%, transparent 40%)`,
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '72px 24px 80px', position: 'relative' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 64, alignItems: 'center' }} className="hero-grid">
+              {/* Left: Headline + Search + CTAs */}
               <div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', border: '1px solid var(--border)', borderRadius: 100, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 20 }}>
-                  <span style={{ width: 6, height: 6, background: 'var(--success)', borderRadius: '50%' }}></span>
-                  Trusted by 500+ local shops across India
+                <div style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: 8, 
+                  background: 'white', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: 100, 
+                  padding: '7px 14px', 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  color: 'var(--text-secondary)', 
+                  marginBottom: 20,
+                  boxShadow: 'var(--shadow-xs)'
+                }}>
+                  <span style={{ width: 6, height: 6, background: '#059669', borderRadius: '50%', display: 'inline-block' }} aria-hidden="true"></span>
+                  Launching in Nagpur — onboarding verified shops
                 </div>
 
-                <h1 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 800, lineHeight: 0.95, letterSpacing: '-0.03em', color: 'var(--text-primary)', margin: 0 }}>
-                  Shop from nearby<br />
-                  <span style={{ color: 'var(--brand)' }}>stores without the wait.</span>
+                <h1 style={{ 
+                  fontSize: 'clamp(36px, 5vw, 56px)', 
+                  fontWeight: 800, 
+                  lineHeight: 0.95, 
+                  letterSpacing: '-0.03em', 
+                  color: 'var(--text-primary)', 
+                  margin: 0,
+                  fontFamily: 'var(--font-heading)'
+                }}>
+                  Know it is in stock<br />
+                  <span style={{ color: '#0F766E' }}>before you leave the house.</span>
                 </h1>
 
-                <p style={{ fontSize: 18, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 20, maxWidth: 520 }}>
-                  Browse real products from verified local shops. Order ahead, get notified when ready, and collect with QR verification. No more crowded aisles.
+                <p style={{ 
+                  fontSize: 18, 
+                  color: 'var(--text-secondary)', 
+                  lineHeight: 1.6, 
+                  marginTop: 20, 
+                  maxWidth: 520,
+                  letterSpacing: '-0.01em'
+                }}>
+                  Browse real inventory from verified local shops in Nagpur. Reserve what you need, walk over, collect with a QR code. No phone calls, no wasted trips.
                 </p>
 
                 <form onSubmit={handleSearch} style={{ marginTop: 28, maxWidth: 480 }}>
-                  <div style={{ display: 'flex', gap: 8, background: 'white', borderRadius: 14, padding: 6, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: 8, 
+                    background: 'white', 
+                    borderRadius: 14, 
+                    padding: 6, 
+                    border: '1px solid var(--border)', 
+                    boxShadow: 'var(--shadow-lg)',
+                    transition: 'all 0.2s ease'
+                  }}>
                     <div style={{ position: 'relative', flex: 1 }}>
-                      <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-                      <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search cement, medicines, pipes..." style={{ width: '100%', padding: '12px 12px 12px 42px', border: 'none', background: 'transparent', outline: 'none', fontSize: 15, fontWeight: 500 }} />
+                      <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} aria-hidden="true" />
+                      <input 
+                        value={searchQuery} 
+                        onChange={e => setSearchQuery(e.target.value)} 
+                        placeholder="Search cement, pipes, medicines..." 
+                        aria-label="Search products"
+                        style={{ 
+                          width: '100%', 
+                          padding: '12px 12px 12px 42px', 
+                          border: 'none', 
+                          background: 'transparent', 
+                          outline: 'none', 
+                          fontSize: 15, 
+                          fontWeight: 500,
+                          color: 'var(--text-primary)'
+                        }} 
+                      />
                     </div>
-                    <button type="submit" style={{ background: 'var(--brand)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 20px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Search</button>
+                    <button 
+                      type="submit" 
+                      style={{ 
+                        background: '#0F766E', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: 10, 
+                        padding: '12px 20px', 
+                        fontWeight: 600, 
+                        fontSize: 14, 
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        minHeight: 44
+                      }}
+                    >Search</button>
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span>Try:</span>
+                    {['cement', 'PVC pipe', 'paracetamol', 'paint'].map(term => (
+                      <button 
+                        key={term}
+                        type="button"
+                        onClick={() => { setSearchQuery(term); window.location.href = `/search?q=${encodeURIComponent(term)}`; }}
+                        style={{ 
+                          background: 'var(--surface-muted)', 
+                          border: '1px solid var(--border)', 
+                          borderRadius: 100, 
+                          padding: '4px 10px', 
+                          fontSize: 11, 
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)'
+                        }}
+                      >{term}</button>
+                    ))}
                   </div>
                 </form>
 
                 <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
-                  <Link href="/shops" style={{ background: 'var(--brand)', color: 'white', borderRadius: 12, padding: '14px 24px', fontWeight: 600, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>Explore Shops<ArrowRight size={16} /></Link>
-                  <Link href="/about" style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 24px', fontWeight: 500, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>How it works</Link>
+                  <Link 
+                    href="/shops" 
+                    style={{ 
+                      background: '#0F766E', 
+                      color: 'white', 
+                      borderRadius: 12, 
+                      padding: '14px 24px', 
+                      fontWeight: 600, 
+                      fontSize: 14, 
+                      textDecoration: 'none', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 8, 
+                      boxShadow: '0 4px 14px -2px rgb(15 118 110 / 0.28)',
+                      transition: 'all 0.2s ease',
+                      minHeight: 48
+                    }}
+                  >Explore shops<ArrowRight size={16} aria-hidden="true" /></Link>
+                  <Link 
+                    href="/about" 
+                    style={{ 
+                      background: 'white', 
+                      color: 'var(--text-primary)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 12, 
+                      padding: '14px 24px', 
+                      fontWeight: 500, 
+                      fontSize: 14, 
+                      textDecoration: 'none', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 8,
+                      transition: 'all 0.2s ease',
+                      minHeight: 48
+                    }}
+                  >How it works</Link>
                 </div>
 
-                <div style={{ display: 'flex', gap: 24, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--border-light)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 40, height: 40, background: 'white', border: '1px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Clock size={18} color="var(--brand)" /></div>
-                    <div><div style={{ fontSize: 13, fontWeight: 600 }}>Order ahead</div><div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Save 25 min avg</div></div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 40, height: 40, background: 'white', border: '1px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ShieldCheck size={18} color="var(--success)" /></div>
-                    <div><div style={{ fontSize: 13, fontWeight: 600 }}>Real inventory</div><div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>No fake stock</div></div>
-                  </div>
+                <div style={{ display: 'flex', gap: 24, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--border-light)', flexWrap: 'wrap' }}>
+                  {[
+                    { icon: Clock, title: 'Order ahead', desc: 'Shop prepares while you travel' },
+                    { icon: ShieldCheck, title: 'Real inventory', desc: 'From shop counter, not warehouse' },
+                  ].map(item => (
+                    <div key={item.title} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 40, height: 40, background: 'white', border: '1px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden="true"><item.icon size={18} color="#0F766E" /></div>
+                      <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{item.title}</div><div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.desc}</div></div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ background: 'white', borderRadius: 20, padding: 24, border: '1px solid var(--border)', boxShadow: 'var(--shadow-xl)' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Layers size={18} color="var(--brand)" />How it works</div>
+              {/* Right: How it works card - clean, not flashy */}
+              <div style={{ 
+                background: 'white', 
+                borderRadius: 20, 
+                padding: 28, 
+                border: '1px solid var(--border)', 
+                boxShadow: 'var(--shadow-xl)',
+                position: 'relative'
+              }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-heading)' }}>
+                  <Layers size={18} color="#0F766E" aria-hidden="true" />
+                  How it works — 3 steps
+                </div>
                 {[
-                  { n: 1, t: 'Find a shop near you', d: 'Browse verified shops by category and distance', icon: Store },
-                  { n: 2, t: 'Add products to cart', d: 'See live price and stock from the shop', icon: Package },
-                  { n: 3, t: 'Order ahead & collect', d: 'Shop prepares, you get notified, QR pickup', icon: Check },
+                  { n: 1, t: 'Find what you need', d: 'Search across every shop near you at once. Prices and stock from shop counter.', icon: Search },
+                  { n: 2, t: 'Reserve it', d: 'Shop sets it aside and starts preparing. You get a message when packed.', icon: Package },
+                  { n: 3, t: 'Walk in and collect', d: 'Show code on phone. Shop scans, hands over order. GST bill in messages.', icon: Check },
                 ].map(s => (
-                  <div key={s.n} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: s.n !== 3 ? '1px solid var(--border-light)' : 'none' }}>
-                    <div style={{ width: 40, height: 40, background: s.n === 3 ? 'var(--brand)' : 'var(--surface-muted)', color: s.n === 3 ? 'white' : 'var(--text-secondary)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><s.icon size={18} /></div>
-                    <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: 14 }}>{s.t}</div><div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>{s.d}</div></div>
-                    <div style={{ width: 24, height: 24, background: 'var(--text-primary)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{s.n}</div>
+                  <div key={s.n} style={{ display: 'flex', gap: 14, padding: '16px 0', borderBottom: s.n !== 3 ? '1px solid var(--border-light)' : 'none' }}>
+                    <div style={{ 
+                      width: 44, 
+                      height: 44, 
+                      background: s.n === 3 ? '#0F766E' : 'var(--surface-muted)', 
+                      color: s.n === 3 ? 'white' : 'var(--text-secondary)', 
+                      borderRadius: 12, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      flexShrink: 0,
+                      border: s.n !== 3 ? '1px solid var(--border)' : 'none'
+                    }} aria-hidden="true"><s.icon size={18} /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {s.t}
+                        <span style={{ 
+                          width: 20, 
+                          height: 20, 
+                          background: 'var(--text-primary)', 
+                          color: 'white', 
+                          borderRadius: '50%', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          fontSize: 10, 
+                          fontWeight: 700 
+                        }} aria-hidden="true">{s.n}</span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{s.d}</div>
+                    </div>
                   </div>
                 ))}
-                <div style={{ marginTop: 16, background: 'var(--brand-light)', borderRadius: 12, padding: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <div style={{ width: 32, height: 32, background: 'var(--brand)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><TrendingUp size={16} color="white" /></div>
-                  <div><div style={{ fontWeight: 600, fontSize: 12.5 }}>Trusted by customers in 12+ cities</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Nagpur • Pune • Mumbai • Delhi and more</div></div>
+                <div style={{ 
+                  marginTop: 20, 
+                  background: '#F0FAF9', 
+                  border: '1px solid #CCFBF1',
+                  borderRadius: 12, 
+                  padding: 14, 
+                  display: 'flex', 
+                  gap: 10, 
+                  alignItems: 'center' 
+                }}>
+                  <div style={{ width: 36, height: 36, background: '#0F766E', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden="true"><MapPin size={16} color="white" /></div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--text-primary)' }}>Starting in Nagpur</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>Onboarding verified shops — more joining every week</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Categories */}
-        <section style={{ padding: '64px 0', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)' }}>
-          <div className="container">
+        {/* Categories - Lucide icons, not emoji, real counts */}
+        <section style={{ padding: '72px 0', background: 'var(--surface-muted)', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Shop by category</h2>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>From medical to hardware — all local categories</p>
+                <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: 'var(--font-heading)' }}>Shop by category</h2>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>From medical to hardware — real categories from local shops</p>
               </div>
-              <Link href="/categories" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>View all categories<ArrowRight size={14} /></Link>
+              <Link href="/categories" style={{ fontSize: 13, fontWeight: 600, color: '#0F766E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, minHeight: 44 }}>View all categories<ArrowRight size={14} aria-hidden="true" /></Link>
             </div>
 
             {loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
-                {[1,2,3,4,5,6].map(i => <div key={i} style={{ height: 120, background: 'white', borderRadius: 16, border: '1px solid var(--border)' }} />)}
+                {[1,2,3,4,5,6,7,8].map(i => <div key={i} style={{ height: 140, background: 'white', borderRadius: 16, border: '1px solid var(--border)' }} />)}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
                 {(categories.length > 0 ? categories : [
-                  { name: 'Medical', count: 120 },
-                  { name: 'Hardware', count: 85 },
-                  { name: 'Building Material', count: 64 },
-                  { name: 'Electrical', count: 52 },
-                  { name: 'Plumbing', count: 48 },
-                  { name: 'Paint', count: 36 },
+                  { name: 'Medical', count: 0, shops: 0 },
+                  { name: 'Hardware', count: 0, shops: 0 },
+                  { name: 'Building Material', count: 0, shops: 0 },
+                  { name: 'Electrical', count: 0, shops: 0 },
+                  { name: 'Plumbing', count: 0, shops: 0 },
+                  { name: 'Paint', count: 0, shops: 0 },
+                  { name: 'Grocery', count: 0, shops: 0 },
+                  { name: 'Electronics', count: 0, shops: 0 },
                 ]).map(cat => {
-                  const icons: any = { 'Building Material': '🏗️', Cement: '🏗️', Medical: '💊', Hardware: '🔩', Plumbing: '🚿', Paint: '🎨', Electrical: '💡', Grocery: '🛒', Electronics: '📱', General: '📦' };
+                  const Icon = categoryIcons[cat.name] || Package;
                   return (
-                    <Link key={cat.name} href={`/search?category=${encodeURIComponent(cat.name)}`} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 20, textDecoration: 'none', transition: 'all 0.2s', display: 'block' }}>
-                      <div style={{ fontSize: 28, marginBottom: 12 }}>{icons[cat.name] || '📦'}</div>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{cat.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{cat.count} products</div>
+                    <Link 
+                      key={cat.name} 
+                      href={`/search?category=${encodeURIComponent(cat.name)}`} 
+                      style={{ 
+                        background: 'white', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: 16, 
+                        padding: 20, 
+                        textDecoration: 'none', 
+                        transition: 'all 0.2s ease', 
+                        display: 'block',
+                        boxShadow: 'var(--shadow-xs)'
+                      }}
+                      className="category-card"
+                    >
+                      <div style={{ 
+                        width: 44, 
+                        height: 44, 
+                        background: 'var(--surface-muted)', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: 11, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        marginBottom: 14,
+                        color: '#0F766E'
+                      }} aria-hidden="true"><Icon size={20} /></div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.3 }}>{cat.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                        {cat.shops > 0 || cat.count > 0 ? `${cat.count > 0 ? `${cat.count} products` : ''}${cat.count > 0 && cat.shops > 0 ? ' • ' : ''}${cat.shops > 0 ? `${cat.shops} shops` : ''}` : 'Browse products'}
+                      </div>
                     </Link>
                   );
                 })}
@@ -191,51 +421,52 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Featured Products */}
-        <section style={{ padding: '64px 0', background: 'var(--surface)' }}>
-          <div className="container">
+        {/* Featured Products - real inventory only */}
+        <section style={{ padding: '72px 0', background: 'var(--surface)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Popular products near you</h2>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Real inventory from verified local shops</p>
+                <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: 'var(--font-heading)' }}>Popular products near you</h2>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>Real inventory from verified local shops — no fake stock</p>
               </div>
-              <Link href="/search" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>View all products<ArrowRight size={14} /></Link>
+              <Link href="/search" style={{ fontSize: 13, fontWeight: 600, color: '#0F766E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, minHeight: 44 }}>View all products<ArrowRight size={14} aria-hidden="true" /></Link>
             </div>
 
             {loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-                {[1,2,3,4].map(i => <div key={i} style={{ height: 280, background: 'var(--surface-muted)', borderRadius: 16 }} />)}
+                {[1,2,3,4,5,6,7,8].map(i => <div key={i} style={{ height: 280, background: 'var(--surface-muted)', borderRadius: 16, border: '1px solid var(--border)' }} />)}
               </div>
             ) : products.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
                 {products.map(p => <ProductCard key={p.id} product={p} onAdd={(id, qty) => handleAddToCart(id, p.shopId, qty)} />)}
               </div>
             ) : (
-              <div style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, textAlign: 'center' }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>No products yet</div>
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Products will appear when shops add inventory</div>
+              <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 40, textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }} aria-hidden="true"><Package size={24} color="var(--text-tertiary)" /></div>
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>No products yet — onboarding shops in Nagpur</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto' }}>Products will appear here as shops add real inventory from their counter. Real photos, real stock, no placeholders.</div>
               </div>
             )}
           </div>
         </section>
 
-        {/* Value Prop */}
-        <section style={{ padding: '64px 0', background: 'var(--surface-muted)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-          <div className="container">
+        {/* Value Prop - 4 points with icons */}
+        <section style={{ padding: '72px 0', background: 'var(--surface-muted)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
             <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 48px' }}>
-              <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Why Digital Bazar?</h2>
+              <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: 'var(--font-heading)' }}>Why Digital Bazar?</h2>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>Built for local commerce, not just online shopping. We keep your neighborhood shops at the center.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {[
-                { icon: ShieldCheck, title: 'Secure & Verified', desc: 'All shops are verified. Real inventory, real prices, GST compliant invoices.' },
-                { icon: Clock, title: 'Save Time', desc: 'Order ahead while you travel. Average 25 minutes saved per order. No queues.' },
-                { icon: Package, title: 'Quality Guarantee', desc: 'Buy from a specific shop you trust. See actual stock before you visit.' },
-                { icon: Users, title: 'Support Local', desc: 'Every order supports a local business. Keep your community thriving.' },
+                { icon: ShieldCheck, title: 'Real inventory, no fake', desc: 'What you see is what is on the shelf. When it sells in shop, it disappears here. No fake availability.' },
+                { icon: Clock, title: 'Order ahead, skip queue', desc: 'Shop prepares while you travel. Walk in, show code, collect. Average 20-30 minutes saved per order.' },
+                { icon: Store, title: 'Shop keeps the customer', desc: 'You buy from a specific shop you trust, not a warehouse. Shop keeps margin and relationship.' },
+                { icon: Users, title: 'Support neighbourhood', desc: 'Every order supports a local business. Keep community thriving while skipping wait and crowd.' },
               ].map(item => (
-                <div key={item.title} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
-                  <div style={{ width: 48, height: 48, background: 'var(--brand-light)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: 'var(--brand)' }}><item.icon size={22} /></div>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{item.title}</div>
+                <div key={item.title} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 24, transition: 'all 0.2s ease' }} className="value-card">
+                  <div style={{ width: 48, height: 48, background: '#E6F4F3', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: '#0F766E' }} aria-hidden="true"><item.icon size={22} /></div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, color: 'var(--text-primary)' }}>{item.title}</div>
                   <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               ))}
@@ -243,39 +474,76 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Shops preview */}
-        <section style={{ padding: '64px 0', background: 'var(--surface)' }}>
-          <div className="container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Nearby shops</h2>
-              <Link href="/shops" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>View all<ArrowRight size={14} /></Link>
+        {/* Shops preview - honest empty state */}
+        <section style={{ padding: '72px 0', background: 'var(--surface)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0, fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>Shops in Nagpur</h2>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{counts.shops > 0 ? `${counts.shops} verified shops • Real photos only` : 'Onboarding our first shops — real shops, not placeholders'}</p>
+              </div>
+              <Link href="/shops" style={{ fontSize: 13, fontWeight: 600, color: '#0F766E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, minHeight: 44 }}>View all shops<ArrowRight size={14} aria-hidden="true" /></Link>
             </div>
+            
             {loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-                {[1,2,3].map(i => <div key={i} style={{ height: 120, background: 'var(--surface-muted)', borderRadius: 16 }} />)}
+                {[1,2,3].map(i => <div key={i} style={{ height: 140, background: 'var(--surface-muted)', borderRadius: 16, border: '1px solid var(--border)' }} />)}
               </div>
             ) : shops.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
                 {shops.map(shop => <ShopCard key={shop.id} shop={{ id: shop.id, name: shop.name, slug: shop.slug, category: shop.category, address: shop.address, rating: shop.rating, reviewCount: shop.reviewCount, preparationTimeMin: shop.preparationTimeMin, status: shop.status, productCount: shop._count?.products }} />)}
               </div>
             ) : (
-              <div style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>No shops nearby yet. Check back as more shops join.</div>
+              <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 40, textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }} aria-hidden="true"><Store size={24} color="var(--text-tertiary)" /></div>
+                <h3 style={{ fontWeight: 700, fontSize: 16, margin: '0 0 8px 0' }}>No shops in your area yet</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.5 }}>We're live in Nagpur and expanding one neighbourhood at a time. Tell us your pincode and we'll notify you when a shop near you joins.</p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', maxWidth: 400, margin: '0 auto' }}>
+                  <input placeholder="Enter pincode" aria-label="Pincode for notification" style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, flex: 1, minWidth: 140, minHeight: 44 }} />
+                  <button style={{ background: '#0F766E', color: 'white', border: 'none', borderRadius: 10, padding: '10px 18px', fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 44 }}>Notify me</button>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 16 }}>Own a shop here? <Link href="/auth/register" style={{ color: '#0F766E', fontWeight: 600, textDecoration: 'none' }}>Get listed free — 15 minutes setup.</Link></p>
+              </div>
             )}
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section style={{ padding: '80px 0', background: 'var(--text-primary)', color: 'white' }}>
-          <div className="container">
+        {/* Final CTA - dark, confident, not flashy */}
+        <section style={{ padding: '80px 0', background: '#0F172A', color: 'white', position: 'relative', overflow: 'hidden' }}>
+          <div aria-hidden="true" style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(circle at 20% 50%, rgba(15, 118, 110, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(15, 118, 110, 0.08) 0%, transparent 40%)`,
+            pointerEvents: 'none'
+          }} />
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', position: 'relative' }}>
             <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, margin: 0 }}>Ready to skip the wait?</h2>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', marginTop: 16, lineHeight: 1.6, maxWidth: 520, margin: '16px auto 0' }}>Find products from nearby shops, order before you arrive, and collect when ready. Join 500+ shops already on Digital Bazar.</p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 28, flexWrap: 'wrap' }}>
-                <Link href="/shops" style={{ background: 'white', color: 'var(--text-primary)', borderRadius: 12, padding: '14px 24px', fontWeight: 600, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>Find Nearby Shops<ArrowRight size={16} /></Link>
-                <Link href="/about" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '14px 24px', fontWeight: 500, fontSize: 14, textDecoration: 'none' }}>Learn more about us</Link>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, margin: 0, fontFamily: 'var(--font-heading)' }}>Your customers are already searching online. Right now they find someone else.</h2>
+              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', marginTop: 16, lineHeight: 1.6, maxWidth: 560, margin: '16px auto 0' }}>List your shop on Digital Bazar and people nearby see what you have in stock. They reserve it, you pack it, they collect it. You keep customer, margin and relationship.</p>
+              
+              <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 400, margin: '28px auto 0', textAlign: 'left', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16 }}>
+                {[
+                  'Setup takes about fifteen minutes. No website needed.',
+                  'No monthly fee while we are getting started.',
+                  'List products by scanning barcodes from your phone.'
+                ].map(text => (
+                  <div key={text} style={{ display: 'flex', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+                    <span style={{ width: 18, height: 18, background: '#0F766E', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }} aria-hidden="true"><Check size={10} color="white" /></span>
+                    {text}
+                  </div>
+                ))}
               </div>
-              <div style={{ marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <span>✓ No setup fees</span><span>✓ First 50 orders free</span><span>✓ Cancel anytime</span>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 32, flexWrap: 'wrap' }}>
+                <Link href="/auth/register" style={{ background: 'white', color: '#0F172A', borderRadius: 12, padding: '14px 24px', fontWeight: 600, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 48 }}>Get listed free<ArrowRight size={16} aria-hidden="true" /></Link>
+                <Link href="/contact" style={{ background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 24px', fontWeight: 500, fontSize: 14, textDecoration: 'none', minHeight: 48 }}>Talk to us</Link>
+              </div>
+              
+              <div style={{ marginTop: 24, fontSize: 11.5, color: 'rgba(255,255,255,0.45)', display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <span>✓ No setup fees</span>
+                <span>✓ Real inventory only</span>
+                <span>✓ QR verification</span>
+                <span>✓ GST invoices</span>
               </div>
             </div>
           </div>
@@ -286,7 +554,20 @@ export default function HomePage() {
 
       <style>{`
         @media (max-width: 1024px) {
-          .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+        }
+        .category-card:hover {
+          border-color: #0F766E !important;
+          box-shadow: var(--shadow-md) !important;
+          transform: translateY(-2px);
+        }
+        .value-card:hover {
+          border-color: var(--border-strong) !important;
+          box-shadow: var(--shadow-sm) !important;
+        }
+        a:focus-visible, button:focus-visible, input:focus-visible {
+          outline: 2px solid #0F766E;
+          outline-offset: 2px;
         }
       `}</style>
     </div>
