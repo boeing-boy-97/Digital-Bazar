@@ -8,6 +8,7 @@ import '@/styles/responsive.css';
 import '@/styles/elite-polish.css';
 import '@/styles/elite-v4.css';
 import '@/styles/fix-all-screens.css';
+import '@/styles/blinkit-inspired.css';
 import { validateEnv } from '@/lib/env/validation';
 import { CookieConsent } from '@/components/layout/CookieConsent';
 import { BottomNav } from '@/components/layout/BottomNav';

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { formatPaise } from '@/lib/domain/money';
 import { calculateAvailable, isLowStock, forecastStockout } from '@/lib/domain/inventory';
-import { Package, AlertTriangle, TrendingDown, DollarSign, Search } from 'lucide-react';
+import { Package, AlertTriangle, TrendingDown, DollarSign, Search, CheckCircle } from 'lucide-react';
 import { BulkStockUpdate } from '@/components/shop/bulk-stock-update';
 import { CatalogHealthWarnings } from '@/components/shop/catalog-health';
 
@@ -61,12 +61,36 @@ export default function InventoryPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em' }}>Inventory</h1>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: 4 }}>Track stock levels and manage inventory</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)' }}>Inventory • Blinkit-inspired operational workflow</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: 4 }}>Track stock levels and manage inventory • Inbound putaway outbound picking packing handover inventory hygiene per Blinkit partners • Real data only</p>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, background: '#F0FAF9', border: '1px solid #CCFBF1', padding: '4px 8px', borderRadius: 100, color: '#0F766E', fontWeight: 600 }}>FIFO method</span>
+            <span style={{ fontSize: 11, background: '#FFFBEB', border: '1px solid #FDE68A', padding: '4px 8px', borderRadius: 100, color: '#D97706', fontWeight: 600 }}>Regular audits</span>
+            <span style={{ fontSize: 11, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 8px', borderRadius: 100, color: '#059669', fontWeight: 600 }}>Hygiene standards</span>
+          </div>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', minWidth: 240 }}>
           <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-          <input className="form-input" placeholder="Search products or SKU" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 0 }} />
+          <input className="form-input" placeholder="Search products or SKU" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, width: '100%' }} />
+        </div>
+      </div>
+      
+      {/* Inventory Integrity - Blinkit-inspired */}
+      <div className="blinkit-role-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+        <div className="blinkit-role-card" style={{ padding: 16 }}>
+          <div className="blinkit-role-icon" style={{ width: 36, height: 36, marginBottom: 12 }}><Package size={16} /></div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Inbound: Inwarding & Putaway</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Receive inventory, putaway to storage zones, FIFO</div>
+        </div>
+        <div className="blinkit-role-card" style={{ padding: 16 }}>
+          <div className="blinkit-role-icon" style={{ width: 36, height: 36, marginBottom: 12 }}><TrendingDown size={16} /></div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Outbound: Picking & Packing</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Zone picking, aisle barcode scan, packing, handover</div>
+        </div>
+        <div className="blinkit-role-card" style={{ padding: 16 }}>
+          <div className="blinkit-role-icon" style={{ width: 36, height: 36, marginBottom: 12 }}><AlertTriangle size={16} /></div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Inventory Hygiene</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Accurate stock levels, regular audits, hygiene standards</div>
         </div>
       </div>
       

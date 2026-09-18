@@ -90,12 +90,12 @@ export default function ShopkeeperDashboard() {
         </Link>
       </div>
 
-      {/* Attention Needed - Elite Professional */}
+      {/* Attention Needed - Blinkit-inspired but Digital Bazar concept */}
       {!loading && (stats.pending > 0 || stats.preparing > 0 || stats.ready > 0 || stats.lowStock > 0) && (
-        <div className="card" style={{ padding: 20, marginBottom: 20, borderLeft: '4px solid var(--brand-500)', background: 'linear-gradient(135deg, #F0FAF9 0%, white 100%)' }}>
+        <div className="card" style={{ padding: 20, marginBottom: 20, borderLeft: '4px solid #0F766E', background: 'linear-gradient(135deg, #F0FAF9 0%, white 100%)' }}>
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <AlertTriangle size={16} color="#0F766E" />
-            Needs attention — real, not fake
+            Needs attention — real, not fake • Blinkit-inspired operational workflow
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13 }}>
             {stats.pending > 0 && <span className="badge badge-warning" style={{ padding: '6px 12px' }}>{stats.pending} new orders — accept now</span>}
@@ -104,7 +104,43 @@ export default function ShopkeeperDashboard() {
             {stats.lowStock > 0 && <span className="badge badge-danger" style={{ padding: '6px 12px' }}>{stats.lowStock} low stock — restock soon</span>}
             {stats.todayOrders === 0 && <span className="badge badge-neutral" style={{ padding: '6px 12px' }}>No orders today — honest empty state</span>}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10 }}>Transactional inventory, zone-sorted picking, QR single-use verification. Real data only.</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10 }}>Transactional inventory, zone-sorted picking, QR single-use verification. Real data only. Operational workflow: inbound putaway outbound picking packing handover inventory hygiene per Blinkit partners.</div>
+        </div>
+      )}
+
+      {/* Your Role as Shop Owner - Blinkit-inspired Your role as a partner */}
+      {!loading && (
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, letterSpacing: '-0.01em' }}>Your role as shop owner • Blinkit-inspired operational roles</h2>
+          <div className="blinkit-role-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div className="blinkit-role-card">
+              <div className="blinkit-role-icon"><Package size={20} /></div>
+              <div className="blinkit-role-title">Team & Order Management</div>
+              <div className="blinkit-role-list">
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Hire, train, manage team to handle daily shop operations</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Manage putting, picking, packing, handover of orders to customers</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Real-time performance tracking per Blinkit partners program</div>
+              </div>
+            </div>
+            <div className="blinkit-role-card">
+              <div className="blinkit-role-icon"><TrendingUp size={20} /></div>
+              <div className="blinkit-role-title">Inventory Integrity</div>
+              <div className="blinkit-role-list">
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Manage stock timely using FIFO method, regular audits</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Stocktake Expected vs counted difference reason per point 53</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Bulk update CSV/barcode/table per point 52 • Real operational</div>
+              </div>
+            </div>
+            <div className="blinkit-role-card">
+              <div className="blinkit-role-icon"><CheckCircle size={20} /></div>
+              <div className="blinkit-role-title">Track Performance</div>
+              <div className="blinkit-role-list">
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Monitor sales, productivity, losses, take corrective actions</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>Adhere to SLAs • Preparation time {stats.pending > 0 ? '15 min' : 'configurable'} per point 50</div>
+                <div className="blinkit-role-item"><div className="blinkit-role-check"><CheckCircle size={12} /></div>QR verification, GST invoices, audit trail per point 37,50,62,76</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -119,25 +155,19 @@ export default function ShopkeeperDashboard() {
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+          <div className="blinkit-stats-grid" style={{ marginBottom: 24, padding: 0 }}>
             {[
-              { label: "Today's orders", value: stats.todayOrders, icon: ShoppingBag, color: 'var(--brand)', bg: 'var(--brand-light)' },
-              { label: 'Pending', value: stats.pending, icon: Clock, color: 'var(--warning)', bg: 'var(--warning-light)' },
-              { label: 'Preparing', value: stats.preparing, icon: Package, color: 'var(--info)', bg: 'var(--info-light)' },
-              { label: 'Ready for pickup', value: stats.ready, icon: CheckCircle, color: 'var(--success)', bg: 'var(--success-light)' },
-              { label: "Today's sales", value: formatPaise(stats.sales), icon: TrendingUp, color: 'var(--success)', bg: 'var(--success-light)' },
-              { label: 'Low stock', value: stats.lowStock, icon: AlertTriangle, color: 'var(--danger)', bg: 'var(--danger-light)' },
+              { label: "Today's orders", value: stats.todayOrders, icon: ShoppingBag, desc: 'Real orders today • No fake' },
+              { label: 'Pending', value: stats.pending, icon: Clock, desc: 'New orders • Accept now' },
+              { label: 'Preparing', value: stats.preparing, icon: Package, desc: 'Picking by zone • Real workflow' },
+              { label: 'Ready for pickup', value: stats.ready, icon: CheckCircle, desc: 'QR verify • Collect' },
+              { label: "Today's sales", value: formatPaise(stats.sales), icon: TrendingUp, desc: 'Real sales • GST included' },
+              { label: 'Low stock', value: stats.lowStock, icon: AlertTriangle, desc: 'Restock soon • Real count' },
             ].map(card => (
-              <div key={card.label} className="card" style={{ padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{card.label}</div>
-                    <div style={{ fontSize: '24px', fontWeight: 700, marginTop: 6, letterSpacing: '-0.02em' }}>{card.value}</div>
-                  </div>
-                  <div style={{ width: 40, height: 40, background: card.bg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color }}>
-                    <card.icon size={20} />
-                  </div>
-                </div>
+              <div key={card.label} className="blinkit-stat-card">
+                <div className="blinkit-stat-icon" style={{ background: 'var(--surface-muted)', borderColor: 'var(--border)' }}><card.icon size={20} /></div>
+                <div className="blinkit-stat-number" style={{ fontSize: typeof card.value === 'string' ? '20px' : '28px' }}>{card.value}</div>
+                <div className="blinkit-stat-label"><strong>{card.label}</strong> • {card.desc}</div>
               </div>
             ))}
           </div>

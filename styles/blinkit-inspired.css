@@ -1,0 +1,1119 @@
+/*
+  Blinkit Seller Inspired CSS - Adapted for Digital Bazar
+  Concept: Real Local Market Digitization, NOT Blinkit clone
+  Takes layout ideas, NOT brand, NOT instant delivery concept
+  Keeps DIGITAL BAZAR "Shop Local. Skip the Wait." trustworthy practical
+*/
+
+/* ===== STATS SECTION - Like Blinkit Seller Powering growth at scale ===== */
+.blinkit-stats-section {
+  background: white;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 0;
+}
+
+.blinkit-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-stat-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.blinkit-stat-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.blinkit-stat-icon {
+  width: 48px;
+  height: 48px;
+  background: #F0FAF9;
+  border: 1px solid #CCFBF1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F766E;
+}
+
+.blinkit-stat-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-family: var(--font-heading);
+}
+
+.blinkit-stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-stats-section {
+    padding: 32px 0;
+  }
+  .blinkit-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .blinkit-stat-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .blinkit-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .blinkit-stat-number {
+    font-size: 24px;
+  }
+  .blinkit-stat-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .blinkit-stats-grid {
+    gap: 10px;
+    padding: 0 12px;
+  }
+  .blinkit-stat-card {
+    padding: 14px;
+  }
+}
+
+/* ===== WHY CHOOSE CARDS - Like Blinkit Why sellers choose ===== */
+.blinkit-why-section {
+  background: var(--surface-muted);
+  padding: 72px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-why-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-why-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.blinkit-why-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.blinkit-why-image {
+  height: 160px;
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.blinkit-why-image-icon {
+  width: 64px;
+  height: 64px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F766E;
+  box-shadow: var(--shadow-xs);
+}
+
+.blinkit-why-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blinkit-why-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.blinkit-why-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.blinkit-why-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.blinkit-why-feature-dot {
+  width: 6px;
+  height: 6px;
+  background: #0F766E;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-why-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-why-section {
+    padding: 48px 0;
+  }
+  .blinkit-why-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  .blinkit-why-image {
+    height: 140px;
+  }
+  .blinkit-why-content {
+    padding: 16px;
+  }
+}
+
+/* ===== 3 STEPS - Like Blinkit Start selling in 3 simple steps ===== */
+.blinkit-steps-section {
+  background: white;
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-steps-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 48px;
+  padding: 0 24px;
+}
+
+.blinkit-steps-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: var(--font-heading);
+  line-height: 1.1;
+}
+
+.blinkit-steps-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+.blinkit-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+.blinkit-steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 44px;
+  left: calc(16.66% + 32px);
+  right: calc(16.66% + 32px);
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.blinkit-step-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.blinkit-step-card:hover {
+  border-color: #0F766E;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.blinkit-step-number {
+  width: 48px;
+  height: 48px;
+  background: #0F766E;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 12px -2px rgb(15 118 110 / 0.3);
+}
+
+.blinkit-step-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #0F766E;
+}
+
+.blinkit-step-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.blinkit-step-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.blinkit-step-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F0FAF9;
+  border: 1px solid #CCFBF1;
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0F766E;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .blinkit-steps-grid::before {
+    display: none;
+  }
+  .blinkit-steps-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 400px;
+  }
+  .blinkit-step-card {
+    text-align: left;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .blinkit-step-number {
+    margin: 0;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+  .blinkit-step-icon {
+    display: none;
+  }
+  .blinkit-step-content {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-steps-section {
+    padding: 48px 0;
+  }
+  .blinkit-steps-header {
+    margin-bottom: 32px;
+    padding: 0 16px;
+  }
+  .blinkit-steps-title {
+    font-size: 24px;
+  }
+  .blinkit-steps-grid {
+    padding: 0 16px;
+  }
+}
+
+/* ===== ROLE CARDS - Like Blinkit Your role as a partner ===== */
+.blinkit-role-section {
+  background: white;
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-role-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.blinkit-role-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.blinkit-role-icon {
+  width: 48px;
+  height: 48px;
+  background: #F0FAF9;
+  border: 1px solid #CCFBF1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F766E;
+  margin-bottom: 16px;
+}
+
+.blinkit-role-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.blinkit-role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.blinkit-role-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.blinkit-role-check {
+  width: 20px;
+  height: 20px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #059669;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-role-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 640px;
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-role-section {
+    padding: 48px 0;
+  }
+  .blinkit-role-grid {
+    padding: 0 16px;
+  }
+  .blinkit-role-card {
+    padding: 20px;
+  }
+}
+
+/* ===== TOOLS SECTION - Like Blinkit Powerful tools ===== */
+.blinkit-tools-section {
+  background: var(--surface-muted);
+  padding: 72px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.blinkit-tools-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.blinkit-tools-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.blinkit-tools-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+.blinkit-tools-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.blinkit-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.blinkit-tool-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.blinkit-tool-item:hover,
+.blinkit-tool-item.active {
+  border-color: #0F766E;
+  box-shadow: var(--shadow-sm);
+}
+
+.blinkit-tool-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F766E;
+  flex-shrink: 0;
+}
+
+.blinkit-tool-item.active .blinkit-tool-icon {
+  background: #0F766E;
+  color: white;
+  border-color: #0F766E;
+}
+
+.blinkit-tool-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.blinkit-tool-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.blinkit-tool-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.blinkit-tools-image {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-lg);
+  aspect-ratio: 16/10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.blinkit-tools-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-tools-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .blinkit-tools-image {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-tools-section {
+    padding: 48px 0;
+  }
+  .blinkit-tools-container {
+    padding: 0 16px;
+    gap: 32px;
+  }
+  .blinkit-tools-title {
+    font-size: 24px;
+  }
+}
+
+/* ===== HELP SECTION - Like Blinkit Help when you need it ===== */
+.blinkit-help-section {
+  background: white;
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-help-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-help-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.blinkit-help-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.blinkit-help-illustration {
+  width: 80px;
+  height: 80px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: #0F766E;
+}
+
+.blinkit-help-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.blinkit-help-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.blinkit-help-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0F766E;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.blinkit-help-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-help-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-help-section {
+    padding: 48px 0;
+  }
+  .blinkit-help-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 16px;
+  }
+}
+
+/* ===== BRAND LOGOS MARQUEE - Like Blinkit brand logos ===== */
+.blinkit-brands-section {
+  background: white;
+  padding: 48px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.blinkit-brands-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.blinkit-brands-marquee {
+  display: flex;
+  gap: 24px;
+  animation: marquee 30s linear infinite;
+  width: max-content;
+}
+
+.blinkit-brand-logo {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  height: 64px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.blinkit-brands-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 640px) {
+  .blinkit-brands-section {
+    padding: 32px 0;
+  }
+  .blinkit-brand-logo {
+    min-width: 120px;
+    height: 56px;
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+}
+
+/* ===== FAQ ACCORDION - Like Blinkit FAQ ===== */
+.blinkit-faq-section {
+  background: var(--surface-muted);
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-faq-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-faq-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.blinkit-faq-item:hover {
+  border-color: var(--border-strong);
+}
+
+.blinkit-faq-question {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  user-select: none;
+  min-height: 44px;
+}
+
+.blinkit-faq-answer {
+  padding: 0 20px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0;
+  padding-top: 16px;
+}
+
+.blinkit-faq-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.blinkit-faq-item.open .blinkit-faq-icon {
+  background: #0F766E;
+  color: white;
+  border-color: #0F766E;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 640px) {
+  .blinkit-faq-section {
+    padding: 48px 0;
+  }
+  .blinkit-faq-container {
+    padding: 0 16px;
+  }
+}
+
+/* ===== ELIGIBILITY CARDS - Like Blinkit Eligibility ===== */
+.blinkit-eligibility-section {
+  background: white;
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-eligibility-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.blinkit-eligibility-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.blinkit-eligibility-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.blinkit-eligibility-icon {
+  width: 64px;
+  height: 64px;
+  background: #F0FAF9;
+  border: 1px solid #CCFBF1;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #0F766E;
+}
+
+.blinkit-eligibility-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-eligibility-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-eligibility-section {
+    padding: 48px 0;
+  }
+  .blinkit-eligibility-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .blinkit-eligibility-card {
+    padding: 16px;
+  }
+  .blinkit-eligibility-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .blinkit-eligibility-title {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .blinkit-eligibility-grid {
+    gap: 10px;
+    padding: 0 12px;
+  }
+}
+
+/* ===== SELECTION PROCESS - Like Blinkit Selection process ===== */
+.blinkit-selection-section {
+  background: var(--surface-muted);
+  padding: 72px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blinkit-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+.blinkit-selection-grid::before {
+  content: '';
+  position: absolute;
+  top: 32px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.blinkit-selection-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.blinkit-selection-card:hover {
+  border-color: #0F766E;
+  box-shadow: var(--shadow-sm);
+}
+
+.blinkit-selection-number {
+  width: 32px;
+  height: 32px;
+  background: #0F766E;
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 auto 12px;
+}
+
+.blinkit-selection-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: #0F766E;
+}
+
+.blinkit-selection-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.blinkit-selection-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1024px) {
+  .blinkit-selection-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .blinkit-selection-grid::before {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .blinkit-selection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .blinkit-selection-section {
+    padding: 48px 0;
+  }
+  .blinkit-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 16px;
+    max-width: 400px;
+  }
+  .blinkit-selection-card {
+    display: flex;
+    gap: 16px;
+    text-align: left;
+    align-items: flex-start;
+  }
+  .blinkit-selection-number {
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .blinkit-selection-icon {
+    display: none;
+  }
+}
