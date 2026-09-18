@@ -20,6 +20,8 @@ export async function GET(req: NextRequest) {
   const inStock = searchParams.get('inStock');
 
   const where: any = { isActive: true, productStatus: 'ACTIVE' };
+  const groupByMaster = searchParams.get('groupByMaster') === 'true';
+  const sortBy = searchParams.get('sortBy') || 'relevance';
   
   if (shopId) where.shopId = shopId;
   if (shopSlug) {
@@ -39,18 +41,57 @@ export async function GET(req: NextRequest) {
   }
   if (inStock === 'true') where.stock = { gt: 0 };
 
+  let orderBy: any = { createdAt: 'desc' };
+  if (sortBy === 'price_low') orderBy = { pricePaise: 'asc' };
+  else if (sortBy === 'price_high') orderBy = { pricePaise: 'desc' };
+  else if (sortBy === 'rating') orderBy = { shop: { rating: 'desc' } };
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { images: true, category: true, storageZone: true, shop: { select: { name: true, slug: true, city: true, rating: true } } },
+      include: { images: true, category: true, storageZone: true, shop: { select: { name: true, slug: true, city: true, rating: true, isPickupEnabled: true, isDeliveryEnabled: true } }, masterProduct: true },
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' }
+      orderBy
     }),
     prisma.product.count({ where })
   ]);
 
-  return NextResponse.json(legacyProductsResponse(products, total, page, Math.ceil(total / limit), requestId));
+  // If grouping by master, aggregate to show cheapest per master + shop count per spec point 29 shop comparison
+  let grouped: any = null;
+  if (groupByMaster && (search || q)) {
+    const masterMap = new Map<string, { masterProductId: string | null; masterProduct: any; cheapest: any; shopCount: number; minPricePaise: number; products: any[] }>();
+    for (const p of products) {
+      const key = p.masterProductId || p.name.toLowerCase(); // fallback to name if no master
+      if (!masterMap.has(key)) {
+        masterMap.set(key, {
+          masterProductId: p.masterProductId,
+          masterProduct: p.masterProduct,
+          cheapest: p,
+          shopCount: 1,
+          minPricePaise: p.pricePaise,
+          products: [p]
+        });
+      } else {
+        const entry = masterMap.get(key)!;
+        entry.shopCount++;
+        entry.products.push(p);
+        if (p.pricePaise < entry.minPricePaise) {
+          entry.minPricePaise = p.pricePaise;
+          entry.cheapest = p;
+        }
+      }
+    }
+    grouped = Array.from(masterMap.values()).sort((a, b) => a.minPricePaise - b.minPricePaise);
+  }
+
+  const response = legacyProductsResponse(products, total, page, Math.ceil(total / limit), requestId);
+  if (grouped) {
+    (response as any).groupedByMaster = grouped;
+    (response as any).groupedCount = grouped.length;
+  }
+
+  return NextResponse.json(response);
 }
 
 export async function POST(req: NextRequest) {
