@@ -282,7 +282,7 @@ export default function ShopkeeperProducts() {
                         </div>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">Your selling price (₹) *</label>
                           <input type="number" step="0.01" className="form-input" value={form.price} onChange={e=>setForm({...form, price: e.target.value})} required placeholder="e.g. 350" style={{ borderRadius: 8 }} />
@@ -293,7 +293,7 @@ export default function ShopkeeperProducts() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">Stock quantity *</label>
                           <input type="number" className="form-input" value={form.stock} onChange={e=>setForm({...form, stock: e.target.value})} required min="0" placeholder="e.g. 50" style={{ borderRadius: 8 }} />
@@ -313,7 +313,7 @@ export default function ShopkeeperProducts() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">Custom SKU (optional)</label>
                           <input className="form-input" value={form.sku} onChange={e=>setForm({...form, sku: e.target.value})} placeholder="Auto if empty" style={{ borderRadius: 8, fontFamily: 'monospace' }} />
@@ -351,7 +351,7 @@ export default function ShopkeeperProducts() {
                     </button>
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">SKU</label>
                       <input className="form-input" value={form.sku} onChange={e=>setForm({...form, sku: e.target.value})} placeholder="Auto if empty" style={{ borderRadius: 8, fontFamily: 'monospace' }} />
@@ -362,7 +362,7 @@ export default function ShopkeeperProducts() {
                     </div>
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">Price (₹) *</label>
                       <input type="number" step="0.01" className="form-input" value={form.price} onChange={e=>setForm({...form, price: e.target.value})} required style={{ borderRadius: 8 }} />
@@ -373,7 +373,7 @@ export default function ShopkeeperProducts() {
                     </div>
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">Unit</label>
                       <select className="form-select" value={form.unit} onChange={e=>setForm({...form, unit: e.target.value})} style={{ borderRadius: 8 }}>
@@ -475,6 +475,27 @@ export default function ShopkeeperProducts() {
           </div>
         </div>
       )}
+          <style>{`
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+          .table { min-width: 600px; }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td { padding: 12px 8px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }

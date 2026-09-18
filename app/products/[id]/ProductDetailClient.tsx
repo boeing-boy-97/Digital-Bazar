@@ -118,7 +118,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
       </div>
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }} className="product-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }} className="product-grid product-detail-grid">
           {/* Images */}
           <div>
             <div style={{ aspectRatio: '1', background: 'white', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: 'var(--shadow-xs)' }}>
@@ -170,15 +170,26 @@ export default function ProductDetailClient({ id }: { id: string }) {
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatPaise(pricePaise * qty)} total • Real price from shop</span>
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }} className="product-actions">
                 <button onClick={addToCart} disabled={outOfStock} style={{ flex: 1, minWidth: 140, background: outOfStock ? 'var(--surface-muted)' : '#0F766E', color: outOfStock ? 'var(--text-tertiary)' : 'white', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 600, fontSize: 14, cursor: outOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, transition: 'all 0.2s ease', boxShadow: outOfStock ? 'none' : '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>
                   <ShoppingCart size={18} aria-hidden="true" />{outOfStock ? 'Out of stock' : `Add to cart`}
                 </button>
                 <button onClick={reserveProduct} disabled={outOfStock} title="Reserve before you go - different from pickup per point 34" style={{ flex: 1, minWidth: 140, background: outOfStock ? 'var(--surface-muted)' : 'white', color: outOfStock ? 'var(--text-tertiary)' : '#0F766E', border: outOfStock ? '1px solid var(--border)' : '1px solid #0F766E', borderRadius: 12, padding: '14px 20px', fontWeight: 600, fontSize: 14, cursor: outOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48 }}>
                   <Bookmark size={18} aria-hidden="true" />Reserve • Collect later
                 </button>
-                <button aria-label="Add to favorites" style={{ width: 48, height: 48, background: 'white', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 48 }}><Heart size={18} aria-hidden="true" /></button>
+                <button aria-label="Add to favorites" style={{ width: 48, height: 48, background: 'white', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 48, flexShrink: 0 }}><Heart size={18} aria-hidden="true" /></button>
               </div>
+              <style>{`
+                @media (max-width: 640px) {
+                  .product-actions {
+                    flex-direction: column !important;
+                  }
+                  .product-actions button {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                  }
+                }
+              `}</style>
               <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.4 }}>
                 Reservation = I will come and collect (stock held until expiry). Pickup = Prepare it for me. Delivery = Bring it to me. Per point 34 distinction.
               </div>
@@ -216,13 +227,13 @@ export default function ProductDetailClient({ id }: { id: string }) {
           <div style={{ marginTop: 48 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: 'var(--font-heading)' }}>Compare other shops — same product</h2>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>Master product linked — price/stock/distance/open/pickup/delivery/rating from real shop inventory</p>
-            <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gap: 12 }} className="shop-comparison-grid">
               {shopComparison.map((other: any) => {
                 const otherAvailable = other.stock - (other.reservedStock || 0);
                 const otherPricePaise = other.pricePaise ?? Math.round((other.price||0)*100);
                 return (
                   <div key={other.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{other.shop?.name} • {other.shop?.city}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <span>{formatPaise(otherPricePaise)} / {other.unit}</span>
@@ -249,7 +260,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
         {related.length > 0 && (
           <div style={{ marginTop: 64 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, fontFamily: 'var(--font-heading)' }}>Related products from real inventory</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }} className="product-grid-elite">
               {related.map((p: any) => <ProductCard key={p.id} product={p} onAdd={() => {}} />)}
             </div>
           </div>

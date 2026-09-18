@@ -154,7 +154,7 @@ export default function ShopkeeperDashboard() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="dashboard-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 20 }} className="dashboard-grid">
             <div className="card">
               <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="card-title">Recent orders</div>
@@ -238,6 +238,36 @@ export default function ShopkeeperDashboard() {
       <style>{`
         @media(max-width: 900px){ 
           .dashboard-grid { grid-template-columns: 1fr !important; } 
+        }
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td {
+            padding: 12px 8px !important;
+            font-size: 12px !important;
+          }
+          .dashboard-grid {
+            gap: 16px !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 1280"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
         }
       `}</style>
     </div>

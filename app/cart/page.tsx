@@ -136,26 +136,28 @@ export default function CartPage() {
                   </div>
                   <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {cart.items.map((item: any) => (
-                      <div key={item.id} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                      <div key={item.id} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }} className="cart-item">
                         <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0 }}>
                           {item.product.images?.[0] ? <img src={item.product.images[0].url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : <Package size={20} color="var(--text-tertiary)" aria-hidden="true" />}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>{item.product.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 120 }}>
+                          <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>{item.product.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
                             <span>{item.product.brand}</span>
                             <span>•</span>
                             <span>{formatPaise(item.product.pricePaise ?? Math.round((item.product.price||0)*100))} / {item.product.unit}</span>
                             <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', borderRadius: 100, padding: '2px 6px', fontSize: 10, fontWeight: 600 }}>Real stock</span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
-                          <button aria-label="Decrease quantity" onClick={() => updateQty(item.id, item.quantity - 1)} style={{ width: 36, height: 36, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={12} aria-hidden="true" /></button>
-                          <div style={{ width: 36, textAlign: 'center', fontSize: 13, fontWeight: 600 }} aria-live="polite">{item.quantity}</div>
-                          <button aria-label="Increase quantity" onClick={() => updateQty(item.id, item.quantity + 1)} style={{ width: 36, height: 36, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={12} aria-hidden="true" /></button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', width: '100%' }} className="cart-item-actions">
+                          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
+                            <button aria-label="Decrease quantity" onClick={() => updateQty(item.id, item.quantity - 1)} style={{ width: 40, height: 40, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={14} aria-hidden="true" /></button>
+                            <div style={{ width: 40, textAlign: 'center', fontSize: 14, fontWeight: 600 }} aria-live="polite">{item.quantity}</div>
+                            <button aria-label="Increase quantity" onClick={() => updateQty(item.id, item.quantity + 1)} style={{ width: 40, height: 40, border: 'none', background: 'var(--surface-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={14} aria-hidden="true" /></button>
+                          </div>
+                          <div style={{ flex: 1, textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{formatPaise((item.product.pricePaise ?? Math.round((item.product.price||0)*100)) * item.quantity)}</div>
+                          <button aria-label={`Remove ${item.product.name} from cart`} onClick={() => removeItem(item.id)} style={{ width: 40, height: 40, border: '1px solid var(--border)', background: 'white', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={16} color="var(--text-tertiary)" aria-hidden="true" /></button>
                         </div>
-                        <div style={{ width: 80, textAlign: 'right', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{formatPaise((item.product.pricePaise ?? Math.round((item.product.price||0)*100)) * item.quantity)}</div>
-                        <button aria-label={`Remove ${item.product.name} from cart`} onClick={() => removeItem(item.id)} style={{ width: 36, height: 36, border: '1px solid var(--border)', background: 'white', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={14} color="var(--text-tertiary)" aria-hidden="true" /></button>
                       </div>
                     ))}
                   </div>
@@ -186,6 +188,36 @@ export default function CartPage() {
         </div>
       </main>
       <EliteFooter />
+      <style>{`
+        @media (max-width: 768px) {
+          .cart-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .cart-summary {
+            position: static !important;
+          }
+          .cart-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          .cart-item-actions {
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 960"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+        }
+        @media (max-width: 320px) {
+          div[style*="maxWidth: 960"] {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

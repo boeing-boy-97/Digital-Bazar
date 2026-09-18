@@ -125,7 +125,7 @@ export default function ShopDetailClient({ id }: { id: string }) {
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px' }}>
         <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', boxShadow: 'var(--shadow-xs)' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} aria-hidden="true" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Search in ${shop.name}`} aria-label={`Search products in ${shop.name}`} style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13, outline: 'none', background: 'white', minHeight: 40 }} />
           </div>

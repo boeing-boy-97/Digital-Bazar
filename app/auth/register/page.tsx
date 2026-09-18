@@ -84,7 +84,7 @@ export default function RegisterPage() {
               <label htmlFor="reg-name" style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block', color: 'var(--text-primary)' }}>Full Name *</label>
               <input id="reg-name" value={name} onChange={e => setName(e.target.value)} required placeholder="Your full name" style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, outline: 'none', minHeight: 44 }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
               <div>
                 <label htmlFor="reg-phone" style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block', color: 'var(--text-primary)' }}>Phone</label>
                 <input id="reg-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91..." style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, outline: 'none', minHeight: 44 }} />
@@ -132,6 +132,27 @@ export default function RegisterPage() {
         </div>
       </main>
       <EliteFooter />
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="maxWidth: 400"], div[style*="maxWidth: 440"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            margin-left: 16px !important;
+            margin-right: 16px !important;
+            max-width: calc(100% - 32px) !important;
+          }
+          .form-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 400"], div[style*="maxWidth: 440"] {
+            margin-left: 12px !important;
+            margin-right: 12px !important;
+            max-width: calc(100% - 24px) !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

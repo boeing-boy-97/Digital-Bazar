@@ -164,6 +164,27 @@ export default function LoginPage() {
         </div>
       </main>
       <EliteFooter />
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="maxWidth: 400"], div[style*="maxWidth: 440"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            margin-left: 16px !important;
+            margin-right: 16px !important;
+            max-width: calc(100% - 32px) !important;
+          }
+          .form-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 400"], div[style*="maxWidth: 440"] {
+            margin-left: 12px !important;
+            margin-right: 12px !important;
+            max-width: calc(100% - 24px) !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

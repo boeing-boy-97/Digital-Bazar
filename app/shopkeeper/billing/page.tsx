@@ -88,6 +88,27 @@ export default function BillingPage() {
       <div style={{ marginTop: 16, fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--surface)', padding: 14, borderRadius: 10, border: '1px solid var(--border)', lineHeight: 1.5 }}>
         <strong>About invoices:</strong> Invoice numbers are generated sequentially and cannot be edited after creation. For corrections, a credit note will be issued. All invoices include GSTIN, HSN codes, and tax breakdown as per Indian GST requirements.
       </div>
+          <style>{`
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+          .table { min-width: 600px; }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td { padding: 12px 8px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }

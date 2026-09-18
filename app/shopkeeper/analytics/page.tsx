@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="analytics-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 20 }} className="analytics-grid">
             <div className="card">
               <div className="card-header"><div className="card-title">Sales last 7 days</div></div>
               <div className="card-body">

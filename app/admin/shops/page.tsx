@@ -77,7 +77,7 @@ export default function AdminShops() {
         </div>
         <div style={{ position: 'relative' }}>
           <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-          <input className="form-input" placeholder="Search shops or owners" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 240 }} />
+          <input className="form-input" placeholder="Search shops or owners" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 0 }} />
         </div>
       </div>
 
@@ -186,6 +186,27 @@ export default function AdminShops() {
           </div>
         </div>
       )}
+          <style>{`
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+          .table { min-width: 600px; }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td { padding: 12px 8px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -234,7 +234,7 @@ export default function ShopSettings() {
 
           <div className="card">
             <div className="card-body" style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="form-grid">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Store size={14} /> Shop name *
@@ -264,7 +264,7 @@ export default function ShopSettings() {
                 <textarea className="form-textarea" value={form.description} onChange={e=>setForm({...form, description: e.target.value})} placeholder="Describe your shop - what do you sell? Works for all categories from medical to hardware" style={{ borderRadius: 8, minHeight: 80 }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="form-grid">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <MapPin size={14} /> Address *
@@ -277,7 +277,7 @@ export default function ShopSettings() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }} className="form-grid-3">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Pincode</label>
                   <input className="form-input" value={form.pincode} onChange={e=>setForm({...form, pincode: e.target.value})} placeholder="440010" style={{ borderRadius: 8 }} />
@@ -292,7 +292,7 @@ export default function ShopSettings() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-grid">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Clock size={14} /> Opening hours
@@ -315,7 +315,7 @@ export default function ShopSettings() {
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 4 }}>Required for GST invoices - works for all product types</div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-grid">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Package size={14} /> Pickup enabled
@@ -336,7 +336,7 @@ export default function ShopSettings() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-grid">
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Clock size={14} /> Preparation time
@@ -366,7 +366,7 @@ export default function ShopSettings() {
               <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, background: 'var(--surface-muted)' }}>
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Shop Pause - Online/Offline per point 58,59</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>Physical shop remains open, but you can pause online orders, reservations, pickup, delivery separately. Real operational need: shopkeeper busy, inventory check, lunch break.</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-grid">
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                     <input type="checkbox" checked={form.isOnlineOrdersPaused} onChange={e=>setForm({...form, isOnlineOrdersPaused: e.target.checked})} />
                     Pause all online orders
@@ -395,7 +395,7 @@ export default function ShopSettings() {
 
               <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, background: 'white' }}>
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Digital Bazar Real Local Market Settings per points 13,18,33</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="form-grid">
                   <div>
                     <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Service radius km (delivery)</label>
                     <input type="number" value={form.serviceRadiusKm} onChange={e=>setForm({...form, serviceRadiusKm: parseFloat(e.target.value)||0})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
@@ -434,6 +434,27 @@ export default function ShopSettings() {
           </div>
         </>
       )}
+          <style>{`
+        @media (max-width: 768px) {
+          .form-grid, .form-grid-3 {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .card-body {
+            padding: 16px !important;
+          }
+          div[style*="maxWidth: 640"] {
+            max-width: 100% !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 640"] {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -78,6 +78,27 @@ export default function AdminProducts() {
           </div>
         </div>
       )}
+          <style>{`
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+          .table { min-width: 600px; }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td { padding: 12px 8px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }

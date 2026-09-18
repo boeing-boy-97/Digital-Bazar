@@ -110,6 +110,13 @@ export function CatalogHealthWarnings({ products, className }: CatalogHealthProp
           <div className="p-3 text-xs text-gray-500 text-center">+ {issues.length - 30} more issues</div>
         )}
       </div>
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="maxHeight: 256"] {
+            max-height: 300px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

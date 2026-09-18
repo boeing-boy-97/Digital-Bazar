@@ -7,9 +7,11 @@ import '@/styles/tables.css';
 import '@/styles/responsive.css';
 import '@/styles/elite-polish.css';
 import '@/styles/elite-v4.css';
+import '@/styles/fix-all-screens.css';
 import { validateEnv } from '@/lib/env/validation';
 import { CookieConsent } from '@/components/layout/CookieConsent';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { OfflineBanner } from '@/components/common/OfflineHandling';
 
 try {
   validateEnv();
@@ -62,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#0F766E" />
       </head>
       <body>
+        <OfflineBanner />
         <div id="main-content" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>{children}</div>
         <BottomNav />
         <CookieConsent />

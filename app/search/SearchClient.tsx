@@ -176,6 +176,34 @@ export default function SearchClient({ initialParams }: { initialParams: { q?: s
           )}
         </div>
       </section>
+          <style>{`
+        @media (max-width: 640px) {
+          .search-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .search-filters {
+            flex-direction: column !important;
+          }
+          .search-filters > * {
+            width: 100% !important;
+          }
+          div[style*="gridTemplateColumns: repeat(auto-fill, minmax(200px"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (min-width: 641px) and (max-width: 768px) {
+          div[style*="gridTemplateColumns: repeat(auto-fill, minmax(200px"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 1280"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -113,6 +113,20 @@ export default function ShopkeeperReservations() {
           })}
         </div>
       )}
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="maxWidth: 768"], div[style*="maxWidth: 800"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 768"], div[style*="maxWidth: 800"] {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

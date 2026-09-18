@@ -181,6 +181,20 @@ export function BulkStockUpdate({ shopId, onComplete }: BulkStockUpdateProps) {
 
         {result && <div className="mt-3 text-xs p-2 bg-gray-50 border border-gray-200 rounded">{result}</div>}
       </div>
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="overflowX: auto"] {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          table {
+            font-size: 11px !important;
+          }
+          th, td {
+            padding: 8px 6px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

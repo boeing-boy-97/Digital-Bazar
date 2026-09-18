@@ -87,7 +87,7 @@ export default function ShopkeeperOrders() {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-            <input className="form-input" placeholder="Search order or customer" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 200 }} />
+            <input className="form-input" placeholder="Search order or customer" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 0, width: "100%", maxWidth: 300 }} />
           </div>
         </div>
       </div>
@@ -131,54 +131,112 @@ export default function ShopkeeperOrders() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <div className="table-wrapper">
-            <table className="table">
-              <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
-              <tbody>
-                {filtered.map(o => (
-                  <tr key={o.id}>
-                    <td>
-                      <Link href={`/shopkeeper/orders/${o.id}`} style={{ fontWeight: 600, color: 'var(--brand)', fontFamily: 'monospace', fontSize: '13px' }}>#{o.orderNumber}</Link>
-                      <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>{o.pickupType === 'DELIVERY' ? 'Delivery' : 'Pickup'} • {o.paymentMethod}</div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 500, fontSize: '14px' }}>{o.customer?.name || 'Customer'}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{o.customer?.phone}</div>
-                    </td>
-                    <td>
-                      <div style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Package size={12} />
-                        {o.items?.length || 0} items
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>{o.items?.slice(0,2).map((i:any)=>i.productName).join(', ')}{o.items?.length>2?'...':''}</div>
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</td>
-                    <td><span className={`badge badge-${getStatusColor(o.status)}`}>{o.status.replace(/_/g, ' ')}</span></td>
-                    <td style={{ fontSize: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={10} />{formatDate(o.createdAt)}</div>
-                      {o.pickupTime && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>Pickup: {new Date(o.pickupTime).toLocaleTimeString()}</div>}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {o.status==='PENDING' && (
-                          <>
-                            <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'ACCEPTED')}>Accept</button>
-                            <button className="btn btn-secondary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'REJECTED')}>Reject</button>
-                          </>
-                        )}
-                        {o.status==='ACCEPTED' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'PREPARING')}>Start preparing</button>}
-                        {o.status==='PREPARING' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'READY_FOR_PICKUP')}>Mark ready</button>}
-                        {o.status==='READY_FOR_PICKUP' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'COMPLETED')}>Complete</button>}
-                        <Link href={`/shopkeeper/orders/${o.id}`} className="btn btn-ghost btn-sm" style={{ borderRadius: 6 }}>View</Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Desktop Table */}
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div className="table-wrapper">
+              <table className="table">
+                <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {filtered.map(o => (
+                    <tr key={o.id}>
+                      <td>
+                        <Link href={`/shopkeeper/orders/${o.id}`} style={{ fontWeight: 600, color: 'var(--brand)', fontFamily: 'monospace', fontSize: '13px' }}>#{o.orderNumber}</Link>
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>{o.pickupType === 'DELIVERY' ? 'Delivery' : 'Pickup'} • {o.paymentMethod}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 500, fontSize: '14px' }}>{o.customer?.name || 'Customer'}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{o.customer?.phone}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Package size={12} />
+                          {o.items?.length || 0} items
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>{o.items?.slice(0,2).map((i:any)=>i.productName).join(', ')}{o.items?.length>2?'...':''}</div>
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</td>
+                      <td><span className={`badge badge-${getStatusColor(o.status)}`}>{o.status.replace(/_/g, ' ')}</span></td>
+                      <td style={{ fontSize: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={10} />{formatDate(o.createdAt)}</div>
+                        {o.pickupTime && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>Pickup: {new Date(o.pickupTime).toLocaleTimeString()}</div>}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {o.status==='PENDING' && (
+                            <>
+                              <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'ACCEPTED')}>Accept</button>
+                              <button className="btn btn-secondary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'REJECTED')}>Reject</button>
+                            </>
+                          )}
+                          {o.status==='ACCEPTED' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'PREPARING')}>Start preparing</button>}
+                          {o.status==='PREPARING' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'READY_FOR_PICKUP')}>Mark ready</button>}
+                          {o.status==='READY_FOR_PICKUP' && <button className="btn btn-primary btn-sm" style={{ borderRadius: 6 }} onClick={()=>updateStatus(o.id,'COMPLETED')}>Complete</button>}
+                          <Link href={`/shopkeeper/orders/${o.id}`} className="btn btn-ghost btn-sm" style={{ borderRadius: 6 }}>View</Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Cards - Responsive for 320px to 768px */}
+          <div className="table-mobile-cards" style={{ display: 'none' }}>
+            {filtered.map(o => (
+              <div key={`mobile-${o.id}`} className="mobile-card">
+                <div className="mobile-card-header">
+                  <div>
+                    <Link href={`/shopkeeper/orders/${o.id}`} style={{ fontWeight: 700, color: 'var(--brand)', fontFamily: 'monospace', fontSize: '14px', textDecoration: 'none' }}>#{o.orderNumber}</Link>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 4 }}>{o.customer?.name || 'Customer'} • {o.customer?.phone}</div>
+                  </div>
+                  <span className={`badge badge-${getStatusColor(o.status)}`}>{o.status.replace(/_/g, ' ')}</span>
+                </div>
+                <div className="mobile-card-body">
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Items</span>
+                    <span className="mobile-card-value">{o.items?.length || 0} items • {o.items?.slice(0,2).map((i:any)=>i.productName).join(', ')}{o.items?.length>2?'...':''}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Total</span>
+                    <span className="mobile-card-value" style={{ fontWeight: 700 }}>{formatPaise(o.totalPaise ?? Math.round((o.total||0)*100))}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Type</span>
+                    <span className="mobile-card-value">{o.pickupType === 'DELIVERY' ? 'Delivery' : 'Pickup'} • {o.paymentMethod}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Time</span>
+                    <span className="mobile-card-value">{formatDate(o.createdAt)}{o.pickupTime ? ` • Pickup ${new Date(o.pickupTime).toLocaleTimeString()}` : ''}</span>
+                  </div>
+                </div>
+                <div className="mobile-card-footer">
+                  {o.status==='PENDING' && (
+                    <>
+                      <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={()=>updateStatus(o.id,'ACCEPTED')}>Accept</button>
+                      <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={()=>updateStatus(o.id,'REJECTED')}>Reject</button>
+                    </>
+                  )}
+                  {o.status==='ACCEPTED' && <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={()=>updateStatus(o.id,'PREPARING')}>Start preparing</button>}
+                  {o.status==='PREPARING' && <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={()=>updateStatus(o.id,'READY_FOR_PICKUP')}>Mark ready</button>}
+                  {o.status==='READY_FOR_PICKUP' && <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={()=>updateStatus(o.id,'COMPLETED')}>Complete</button>}
+                  <Link href={`/shopkeeper/orders/${o.id}`} className="btn btn-secondary btn-sm" style={{ flex: 1, textAlign: 'center', justifyContent: 'center' }}>View</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <style>{`
+            @media (max-width: 768px) {
+              .table-wrapper { display: none !important; }
+              .table-mobile-cards { display: block !important; }
+            }
+            @media (min-width: 769px) {
+              .table-mobile-cards { display: none !important; }
+            }
+          `}</style>
+        </>
       )}
     </div>
   );

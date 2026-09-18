@@ -91,7 +91,7 @@ export default function PromotionsPage() {
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 4 }}>Uppercase letters and numbers only</div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Discount type *</label>
                   <select className="form-select" value={form.discountType} onChange={e=>setForm({...form, discountType: e.target.value})} style={{ borderRadius: 8 }}>
@@ -105,7 +105,7 @@ export default function PromotionsPage() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 12 }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Minimum order ₹</label>
                   <input type="number" className="form-input" value={form.minOrder} onChange={e=>setForm({...form, minOrder: e.target.value})} min="0" placeholder="1000" style={{ borderRadius: 8 }} />
@@ -178,6 +178,27 @@ export default function PromotionsPage() {
           )}
         </div>
       </div>
+          <style>{`
+        @media (max-width: 768px) {
+          .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-wrapper::after {
+            content: '← Swipe to see more →';
+            display: block;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            padding: 8px;
+            background: var(--surface-muted);
+          }
+          .table { min-width: 600px; }
+        }
+        @media (max-width: 640px) {
+          .table th, .table td { padding: 12px 8px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }

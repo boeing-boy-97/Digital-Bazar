@@ -66,7 +66,7 @@ export default function InventoryPage() {
         </div>
         <div style={{ position: 'relative' }}>
           <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-          <input className="form-input" placeholder="Search products or SKU" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 240 }} />
+          <input className="form-input" placeholder="Search products or SKU" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, minWidth: 0 }} />
         </div>
       </div>
       
@@ -139,7 +139,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' /* responsive handled by fix-all-screens.css */, gap: 16, marginBottom: 20 }}>
         <BulkStockUpdate shopId={products[0]?.shopId || 'temp'} onComplete={fetchData} />
         <CatalogHealthWarnings products={products.map((p:any)=>({ id: p.id, name: p.name, sku: p.sku, stock: p.stock, pricePaise: p.pricePaise ?? 0, images: p.images || [], productStatus: p.productStatus || 'ACTIVE', masterProductId: p.masterProductId, barcode: p.barcode, categoryId: p.categoryId, updatedAt: p.updatedAt || new Date().toISOString() }))} />
       </div>
@@ -180,37 +180,87 @@ export default function InventoryPage() {
           <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 4 }}>Try adjusting your search or filter criteria</div>
         </div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <div className="table-wrapper">
-            <table className="table">
-              <thead><tr><th>Product</th><th>Available</th><th>Reserved</th><th>Threshold</th><th>Forecast</th><th>Value</th></tr></thead>
-              <tbody>
-                {filtered.map(p => {
-                  const forecast = forecastLowStock(p);
-                  return (
-                    <tr key={p.id}>
-                      <td>
-                        <div style={{ fontWeight: 500, fontSize: '14px' }}>{p.name}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{p.sku} • {p.unit}</div>
-                      </td>
-                      <td><span className={`badge badge-${p.stock<=0?'danger':p.stock<=p.lowStockThreshold?'warning':'success'}`}>{p.stock} {p.unit}</span></td>
-                      <td><span style={{ fontSize: '13px' }}>{p.reservedStock || 0}</span></td>
-                      <td><span style={{ fontSize: '13px' }}>{p.lowStockThreshold}</span></td>
-                      <td>
-                        {p.stock<=0 ? <span className="badge badge-danger">Out of stock</span> : 
-                         forecast.daysLeft === null ? <span className="badge badge-neutral">Insufficient data</span> :
-                         forecast.daysLeft < 7 ? <span className="badge badge-warning">~{forecast.daysLeft} days left</span> : 
-                         <span className="badge badge-success">{forecast.daysLeft} days</span>}
-                        {forecast.dailyAvg && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>~{forecast.dailyAvg}/day</div>}
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{formatPaise((p.pricePaise ?? Math.round((p.price||0)*100)) * p.stock)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div className="table-wrapper">
+              <table className="table">
+                <thead><tr><th>Product</th><th>Available</th><th>Reserved</th><th>Threshold</th><th>Forecast</th><th>Value</th></tr></thead>
+                <tbody>
+                  {filtered.map(p => {
+                    const forecast = forecastLowStock(p);
+                    return (
+                      <tr key={p.id}>
+                        <td>
+                          <div style={{ fontWeight: 500, fontSize: '14px' }}>{p.name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{p.sku} • {p.unit}</div>
+                        </td>
+                        <td><span className={`badge badge-${p.stock<=0?'danger':p.stock<=p.lowStockThreshold?'warning':'success'}`}>{p.stock} {p.unit}</span></td>
+                        <td><span style={{ fontSize: '13px' }}>{p.reservedStock || 0}</span></td>
+                        <td><span style={{ fontSize: '13px' }}>{p.lowStockThreshold}</span></td>
+                        <td>
+                          {p.stock<=0 ? <span className="badge badge-danger">Out of stock</span> : 
+                           forecast.daysLeft === null ? <span className="badge badge-neutral">Insufficient data</span> :
+                           forecast.daysLeft < 7 ? <span className="badge badge-warning">~{forecast.daysLeft} days left</span> : 
+                           <span className="badge badge-success">{forecast.daysLeft} days</span>}
+                          {forecast.dailyAvg && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>~{forecast.dailyAvg}/day</div>}
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{formatPaise((p.pricePaise ?? Math.round((p.price||0)*100)) * p.stock)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Cards */}
+          <div className="table-mobile-cards" style={{ display: 'none' }}>
+            {filtered.map(p => {
+              const forecast = forecastLowStock(p);
+              return (
+                <div key={`mobile-${p.id}`} className="mobile-card">
+                  <div className="mobile-card-header">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: 2 }}>{p.sku} • {p.unit}</div>
+                    </div>
+                    <span className={`badge badge-${p.stock<=0?'danger':p.stock<=p.lowStockThreshold?'warning':'success'}`}>{p.stock} {p.unit}</span>
+                  </div>
+                  <div className="mobile-card-body">
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Reserved</span>
+                      <span className="mobile-card-value">{p.reservedStock || 0} {p.unit}</span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Threshold</span>
+                      <span className="mobile-card-value">{p.lowStockThreshold}</span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Forecast</span>
+                      <span className="mobile-card-value">
+                        {p.stock<=0 ? 'Out of stock' : forecast.daysLeft === null ? 'Insufficient data' : forecast.daysLeft < 7 ? `~${forecast.daysLeft} days left` : `${forecast.daysLeft} days`}
+                        {forecast.dailyAvg ? ` • ~${forecast.dailyAvg}/day` : ''}
+                      </span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Value</span>
+                      <span className="mobile-card-value" style={{ fontWeight: 700 }}>{formatPaise((p.pricePaise ?? Math.round((p.price||0)*100)) * p.stock)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .table-wrapper { display: none !important; }
+              .table-mobile-cards { display: block !important; }
+            }
+            @media (min-width: 769px) {
+              .table-mobile-cards { display: none !important; }
+            }
+          `}</style>
+        </>
       )}
     </div>
   );

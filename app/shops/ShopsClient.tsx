@@ -193,6 +193,22 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
           )}
         </div>
       </section>
+          <style>{`
+        @media (max-width: 640px) {
+          div[style*="gridTemplateColumns: repeat(auto-fill, minmax(320px"] {
+            grid-template-columns: 1fr !important;
+          }
+          .shops-filters {
+            flex-direction: column !important;
+          }
+        }
+        @media (max-width: 375px) {
+          div[style*="maxWidth: 1280"] {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
