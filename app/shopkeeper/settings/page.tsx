@@ -21,9 +21,22 @@ export default function ShopSettings() {
     gstin: '', 
     isPickupEnabled: true, 
     isDeliveryEnabled: false, 
+    isReservationEnabled: true,
     preparationTimeMin: 15, 
-    isPaused: false 
+    isPaused: false,
+    isOnlineOrdersPaused: false,
+    isReservationsPaused: false,
+    isPickupPaused: false,
+    isDeliveryPaused: false,
+    pauseReason: '',
+    serviceRadiusKm: 5,
+    minOrderPaise: 0,
+    deliveryFeePaise: 0,
+    priceParityMode: 'SAME',
+    reservationExpiryMin: 120
   });
+  const [pauseLoading, setPauseLoading] = useState(false);
+
 
   useEffect(() => { fetchShop(); }, []);
 
@@ -49,12 +62,50 @@ export default function ShopSettings() {
           gstin: detail.shop.gstin || '',
           isPickupEnabled: detail.shop.isPickupEnabled ?? true,
           isDeliveryEnabled: detail.shop.isDeliveryEnabled ?? false,
+          isReservationEnabled: (detail.shop as any).isReservationEnabled ?? true,
           preparationTimeMin: detail.shop.preparationTimeMin || 15,
-          isPaused: detail.shop.status === 'PAUSED'
+          isPaused: detail.shop.status === 'PAUSED',
+          isOnlineOrdersPaused: (detail.shop as any).isOnlineOrdersPaused ?? false,
+          isReservationsPaused: (detail.shop as any).isReservationsPaused ?? false,
+          isPickupPaused: (detail.shop as any).isPickupPaused ?? false,
+          isDeliveryPaused: (detail.shop as any).isDeliveryPaused ?? false,
+          pauseReason: (detail.shop as any).pauseReason || '',
+          serviceRadiusKm: (detail.shop as any).serviceRadiusKm || 5,
+          minOrderPaise: (detail.shop as any).minOrderPaise || 0,
+          deliveryFeePaise: (detail.shop as any).deliveryFeePaise || 0,
+          priceParityMode: (detail.shop as any).priceParityMode || 'SAME',
+          reservationExpiryMin: (detail.shop as any).reservationExpiryMin || 120
         });
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePauseToggle = async () => {
+    if (!shop) return;
+    setPauseLoading(true);
+    try {
+      const res = await fetch(`/api/shops/${shop.id}/pause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isOnlineOrdersPaused: form.isOnlineOrdersPaused,
+          isReservationsPaused: form.isReservationsPaused,
+          isPickupPaused: form.isPickupPaused,
+          isDeliveryPaused: form.isDeliveryPaused,
+          pauseReason: form.pauseReason
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Pause settings updated - physical shop remains open, digital availability changed per point 58,59');
+        fetchShop();
+      } else {
+        alert(data.error?.message || 'Failed to update pause');
+      }
+    } finally {
+      setPauseLoading(false);
     }
   };
 
@@ -78,7 +129,13 @@ export default function ShopSettings() {
           gstin: form.gstin,
           isPickupEnabled: form.isPickupEnabled,
           isDeliveryEnabled: form.isDeliveryEnabled,
+          isReservationEnabled: form.isReservationEnabled,
           preparationTimeMin: form.preparationTimeMin,
+          serviceRadiusKm: form.serviceRadiusKm,
+          minOrderPaise: form.minOrderPaise,
+          deliveryFeePaise: form.deliveryFeePaise,
+          priceParityMode: form.priceParityMode,
+          reservationExpiryMin: form.reservationExpiryMin,
           status: form.isPaused ? 'PAUSED' : shop.status === 'PAUSED' ? 'APPROVED' : shop.status
         })
       });
@@ -306,6 +363,69 @@ export default function ShopSettings() {
                 </div>
               </div>
               
+              <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, background: 'var(--surface-muted)' }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Shop Pause - Online/Offline per point 58,59</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>Physical shop remains open, but you can pause online orders, reservations, pickup, delivery separately. Real operational need: shopkeeper busy, inventory check, lunch break.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" checked={form.isOnlineOrdersPaused} onChange={e=>setForm({...form, isOnlineOrdersPaused: e.target.checked})} />
+                    Pause all online orders
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" checked={form.isReservationsPaused} onChange={e=>setForm({...form, isReservationsPaused: e.target.checked})} />
+                    Pause reservations
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" checked={form.isPickupPaused} onChange={e=>setForm({...form, isPickupPaused: e.target.checked})} />
+                    Pause pickup
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" checked={form.isDeliveryPaused} onChange={e=>setForm({...form, isDeliveryPaused: e.target.checked})} />
+                    Pause delivery
+                  </label>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Pause reason (customer sees)</label>
+                  <input value={form.pauseReason} onChange={e=>setForm({...form, pauseReason: e.target.value})} placeholder="e.g. Stock checking, lunch break, busy" style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
+                </div>
+                <button onClick={handlePauseToggle} disabled={pauseLoading} style={{ marginTop: 12, background: 'black', color: 'white', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600 }}>
+                  {pauseLoading ? 'Updating...' : 'Update pause status'}
+                </button>
+              </div>
+
+              <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, background: 'white' }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Digital Bazar Real Local Market Settings per points 13,18,33</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Service radius km (delivery)</label>
+                    <input type="number" value={form.serviceRadiusKm} onChange={e=>setForm({...form, serviceRadiusKm: parseFloat(e.target.value)||0})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Min order paise (e.g. 10000 = ₹100)</label>
+                    <input type="number" value={form.minOrderPaise} onChange={e=>setForm({...form, minOrderPaise: parseInt(e.target.value)||0})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Delivery fee paise</label>
+                    <input type="number" value={form.deliveryFeePaise} onChange={e=>setForm({...form, deliveryFeePaise: parseInt(e.target.value)||0})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Price parity mode</label>
+                    <select value={form.priceParityMode} onChange={e=>setForm({...form, priceParityMode: e.target.value})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }}>
+                      <option value="SAME">Same as offline</option>
+                      <option value="DIFFERENT">Different (online extra)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Reservation expiry minutes (e.g. 120 = 2h, until 6:30 PM logic)</label>
+                    <input type="number" value={form.reservationExpiryMin} onChange={e=>setForm({...form, reservationExpiryMin: parseInt(e.target.value)||120})} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, marginTop: 4 }} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input type="checkbox" checked={form.isReservationEnabled} onChange={e=>setForm({...form, isReservationEnabled: e.target.checked})} />
+                    <label style={{ fontSize: 13 }}>Enable reservations (Reserve Before You Go)</label>
+                  </div>
+                </div>
+              </div>
+
               <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ borderRadius: 8, marginTop: 8, padding: '12px 20px', fontWeight: 600 }}>
                 <Save size={16} />
                 {saving ? 'Saving...' : 'Save settings'}

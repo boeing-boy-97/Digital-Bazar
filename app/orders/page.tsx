@@ -30,7 +30,10 @@ export default function OrdersPage() {
       <Header />
       <main className="main-content">
         <div className="container" style={{ paddingTop: 24, paddingBottom: 80 }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: 16 }}>My Orders</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 700 }}>My Orders</h1>
+            <Link href="/reservations" className="btn btn-secondary btn-sm" style={{ fontSize: '12px' }}>Reservations • Reserve Before You Go</Link>
+          </div>
 
           <div className="tabs" style={{ marginBottom: 16 }}>
             {[

@@ -11,6 +11,7 @@ import {
 const navItems = [
   { href: '/shopkeeper', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/shopkeeper/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/shopkeeper/reservations', label: 'Reservations', icon: ShoppingBag },
   { href: '/shopkeeper/products', label: 'Products', icon: Package },
   { href: '/shopkeeper/inventory', label: 'Inventory', icon: Warehouse },
   { href: '/shopkeeper/zones', label: 'Storage Zones', icon: Store },

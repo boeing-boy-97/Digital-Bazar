@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { formatPaise } from '@/lib/domain/money';
 import { calculateAvailable, isLowStock, forecastStockout } from '@/lib/domain/inventory';
 import { Package, AlertTriangle, TrendingDown, DollarSign, Search } from 'lucide-react';
+import { BulkStockUpdate } from '@/components/shop/bulk-stock-update';
+import { CatalogHealthWarnings } from '@/components/shop/catalog-health';
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -137,6 +139,17 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+        <BulkStockUpdate shopId={products[0]?.shopId || 'temp'} onComplete={fetchData} />
+        <CatalogHealthWarnings products={products.map((p:any)=>({ id: p.id, name: p.name, sku: p.sku, stock: p.stock, pricePaise: p.pricePaise ?? 0, images: p.images || [], productStatus: p.productStatus || 'ACTIVE', masterProductId: p.masterProductId, barcode: p.barcode, categoryId: p.categoryId, updatedAt: p.updatedAt || new Date().toISOString() }))} />
+      </div>
+
+      <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 20, background: 'white' }}>
+        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Stocktake - Physical verification per point 53</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>Expected vs counted difference with reason - real inventory hygiene from Blinkit operational workflow</div>
+        <StocktakeForm shopId={products[0]?.shopId || ''} onComplete={fetchData} />
+      </div>
+
       {loading ? (
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -199,6 +212,53 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function StocktakeForm({ shopId, onComplete }: { shopId: string; onComplete: () => void }) {
+  const [productId, setProductId] = useState('');
+  const [countedQty, setCountedQty] = useState(0);
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!productId) { setResult('Select product'); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/shops/${shopId}/stocktake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, countedQty, reason })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Failed');
+      setResult(`Stocktake recorded: expected ${data.stocktake?.expectedQty} counted ${data.stocktake?.countedQty} diff ${data.stocktake?.difference} - ${data.message}`);
+      onComplete();
+    } catch (e:any) {
+      setResult(`Error: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Product ID</div>
+        <input value={productId} onChange={e=>setProductId(e.target.value)} placeholder="Product ID" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 12, width: 160 }} />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Counted qty</div>
+        <input type="number" value={countedQty} onChange={e=>setCountedQty(parseInt(e.target.value)||0)} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 12, width: 80 }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 120 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Reason for difference</div>
+        <input value={reason} onChange={e=>setReason(e.target.value)} placeholder="Damaged / miscount / theft..." style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 12, width: '100%' }} />
+      </div>
+      <button onClick={submit} disabled={loading || !shopId} style={{ background: 'black', color: 'white', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600 }}>Record stocktake</button>
+      {result && <div style={{ width: '100%', fontSize: 11, padding: 8, background: 'var(--surface-muted)', borderRadius: 8, marginTop: 8 }}>{result}</div>}
     </div>
   );
 }

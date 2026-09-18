@@ -26,6 +26,7 @@ model User {
   addresses     Address[]
   carts         Cart[]
   orders        Order[]  @relation("CustomerOrders")
+  reservations  Reservation[] @relation("CustomerReservations")
   favorites     Favorite[]
   reviews       Review[]
   supportTickets SupportTicket[]
@@ -131,19 +132,40 @@ model Shop {
   email             String?
   // Structured business hours - replaces loosely stored openingHours/closingHours/holidays per point 15
   timezone          String     @default("Asia/Kolkata")
-  status            String     @default("PENDING_REVIEW") // PENDING_REVIEW→APPROVED→OPEN/CLOSED/TEMPORARILY_CLOSED/SUSPENDED
+  status            String     @default("PENDING_REVIEW") // DRAFT/PENDING_REVIEW/CHANGES_REQUESTED/APPROVED/REJECTED/SUSPENDED/CLOSED per point 12
   rejectionReason   String?
   isPickupEnabled   Boolean    @default(true)
   isDeliveryEnabled Boolean    @default(false)
-  preparationTimeMin Int       @default(15) // Default 15min, configurable
-  maxActiveOrders   Int?       // Shop capacity per point 32
-  rating            Float      @default(0) // Denormalized but updated via review
+  isReservationEnabled Boolean @default(true) // Reservation first-class per point 33
+  preparationTimeMin Int       @default(15) // Default 15min, configurable per point 50
+  maxActiveOrders   Int?       // Shop capacity per point 32, 50
+  rating            Float      @default(0) // Denormalized but updated via review real
   reviewCount       Int        @default(0)
   gstin             String?
   businessInfo      String?    // JSON
   bankDetails       String?    // JSON
   completionPercent Int        @default(0)
-  lastInventoryUpdate DateTime?
+  lastInventoryUpdate DateTime? // For stock confidence per point 23
+  // Shop pause - pause online orders/reservations/pickup/delivery without closing physical per point 58, 59
+  isOnlineOrdersPaused Boolean @default(false)
+  isReservationsPaused Boolean @default(false)
+  isPickupPaused Boolean @default(false)
+  isDeliveryPaused Boolean @default(false)
+  pauseReason String?
+  // Digital shelf + availability per point 56,57
+  // Physical vs digital availability separate
+  // Service radius for delivery per point 13
+  serviceRadiusKm Float? // Delivery radius
+  minOrderPaise Int? // Minimum order for delivery
+  deliveryFeePaise Int? // Delivery fee
+  // Price parity setting per point 18
+  priceParityMode String? @default("SAME") // SAME or DIFFERENT
+  // Reservation policy per point 33, 43, 44
+  reservationExpiryMin Int @default(120) // 2 hours default hold
+  reservationPolicy String? // JSON policy
+  // Verification badge per point 130
+  isVerified Boolean @default(false)
+  verificationDetails String? // JSON what verified means
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
@@ -154,9 +176,11 @@ model Shop {
   products          Product[]
   storageZones      StorageZone[]
   orders            Order[]
+  reservations      Reservation[]
   inventoryTransactions InventoryTransaction[]
   reviews           Review[]
   promotions        Promotion[]
+  stocktakes        Stocktake[]
 
   @@index([status])
   @@index([city])
@@ -164,6 +188,7 @@ model Shop {
   @@index([category])
   @@index([status, city])
   @@index([status, pincode])
+  @@index([isVerified])
 }
 
 model ShopBusinessHours {
@@ -289,6 +314,8 @@ model Product {
   cartItems         CartItem[]
   orderItems        OrderItem[]
   inventoryTransactions InventoryTransaction[]
+  reservationItems  ReservationItem[]
+  stocktakes        Stocktake[]
   favorites         Favorite[]
   reviews           Review[]
 
@@ -395,23 +422,26 @@ model Order {
   customer        User        @relation("CustomerOrders", fields: [customerId], references: [id])
   shopId          String
   shop            Shop        @relation(fields: [shopId], references: [id])
-  status          String      @default("PENDING") // PENDING→ACCEPTED→PREPARING→READY_FOR_PICKUP→COMPLETED or REJECTED
-  // Money in paise - authoritative, integer
+  status          String      @default("PENDING") // PENDING→ACCEPTED→PREPARING→READY_FOR_PICKUP→COMPLETED or REJECTED per point 44
+  // Money in paise - authoritative, integer per point 39, 114
   subtotalPaise   Int
   discountPaise   Int         @default(0)
   taxPaise        Int         @default(0)
   totalPaise      Int
+  deliveryFeePaise Int        @default(0) // Delivery fee per point 52, 62
   paymentMethod   String      @default("PAY_AT_STORE")
   paymentStatus   String      @default("PENDING")
-  pickupType      String      @default("PICKUP")
+  pickupType      String      @default("PICKUP") // PICKUP/DELIVERY/RESERVATION per point 34
   pickupTime      DateTime?
   deliveryAddress String?
   notes           String?
-  qrToken         String      @unique // Short-lived signed HMAC, single-use
-  qrExpiry        DateTime?   // QR expiry 15min
+  qrToken         String      @unique // Short-lived signed HMAC, single-use per point 37, 50, 62
+  qrExpiry        DateTime?   // QR expiry 15min per point 37
   qrUsed          Boolean     @default(false)
   preparationProgress Int    @default(0)
-  idempotencyKey  String?     @unique // For idempotent order creation
+  idempotencyKey  String?     @unique // For idempotent order creation per point 115
+  priceSnapshot String? // JSON immutable price history per point 19
+  fulfillmentType String @default("PICKUP") // PICKUP/DELIVERY/RESERVATION per point 42, 87
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -425,6 +455,82 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([fulfillmentType])
+}
+
+// Reservation - First-class feature per point 33, 43, 44, 89
+model Reservation {
+  id              String   @id @default(cuid())
+  reservationNumber String @unique // RES-2026-000123
+  customerId      String
+  customer        User     @relation("CustomerReservations", fields: [customerId], references: [id])
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id])
+  status          String   @default("PENDING") // PENDING→CONFIRMED→HELD→COLLECTED / DECLINED / EXPIRED per point 43
+  items           ReservationItem[]
+  reservedAt      DateTime @default(now())
+  expiresAt       DateTime // Based on shop reservationExpiryMin policy per point 44
+  confirmedAt     DateTime?
+  collectedAt     DateTime?
+  reservationCode String @unique // Short code for collection per point 35, 50
+  qrToken         String? @unique
+  qrExpiry        DateTime?
+  qrUsed          Boolean @default(false)
+  notes           String?
+  declineReason   String?
+  idempotencyKey  String? @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  statusHistory   ReservationStatusHistory[]
+
+  @@index([shopId, status])
+  @@index([customerId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model ReservationItem {
+  id            String   @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  productName   String
+  sku           String
+  quantity      Int
+  unit          String
+  unitPricePaise Int
+  subtotalPaise Int
+  createdAt     DateTime @default(now())
+}
+
+model ReservationStatusHistory {
+  id            String   @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromStatus    String?
+  toStatus      String
+  actorId       String?
+  reason        String?
+  createdAt     DateTime @default(now())
+}
+
+model Stocktake {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  expectedQty Int
+  countedQty  Int
+  difference  Int
+  reason      String?
+  actorId     String?
+  createdAt   DateTime @default(now())
+
+  @@index([shopId])
+  @@index([productId])
 }
 
 model OrderItem {

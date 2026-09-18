@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { formatPaise } from '@/lib/domain/money';
 import { fromPaise } from '@/lib/domain/money';
 import { ProductCard } from '@/components/customer/ProductCard';
-import { ShoppingCart, Heart, ShieldCheck, Clock, Package, MapPin, ArrowLeft, Check } from 'lucide-react';
+import { ShoppingCart, Heart, ShieldCheck, Clock, Package, MapPin, ArrowLeft, Check, Bookmark } from 'lucide-react';
+import { StockConfidence } from '@/components/shop/stock-confidence';
 import Link from 'next/link';
 
 export default function ProductDetailClient({ id }: { id: string }) {
@@ -42,6 +43,21 @@ export default function ProductDetailClient({ id }: { id: string }) {
     } else {
       const d = await res.json();
       alert(d.error || 'Unable to add to cart — may be out of stock');
+    }
+  };
+
+  const reserveProduct = async () => {
+    if (!product) return;
+    const res = await fetch('/api/reservations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-idempotency-key': `res-${product.id}-${Date.now()}` },
+      body: JSON.stringify({ shopId: product.shopId, items: [{ productId: product.id, quantity: qty }], notes: 'Reserve before visiting' })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(`Reserved! ${data.message || ''} Code: ${data.reservation?.reservationCode || ''}. Show at ${product.shop?.name} counter before ${new Date(data.reservation?.expiresAt).toLocaleTimeString()}`);
+    } else {
+      alert(data.error?.message || data.error || 'Reservation failed - shop may have paused reservations or out of stock');
     }
   };
 
@@ -127,11 +143,21 @@ export default function ProductDetailClient({ id }: { id: string }) {
               {product.discount > 0 && <span style={{ background: '#ECFDF5', color: '#059669', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, border: '1px solid #A7F3D0' }}>{product.discount}% OFF</span>}
             </div>
 
-            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               {outOfStock ? <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', padding: '5px 10px', borderRadius: 100, border: '1px solid #FECACA' }}>Out of stock • Real inventory</span> : available <= (product.lowStockThreshold || 10) ? <span style={{ fontSize: 11, fontWeight: 600, color: '#D97706', background: '#FFFBEB', padding: '5px 10px', borderRadius: 100, border: '1px solid #FDE68A' }}>Low stock • {available} left • Real count</span> : <span style={{ fontSize: 11, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '5px 10px', borderRadius: 100, border: '1px solid #A7F3D0' }}>In stock • {available} available • Real inventory</span>}
               <span style={{ fontSize: 11, fontWeight: 500, background: 'var(--surface-muted)', color: 'var(--text-secondary)', padding: '5px 10px', borderRadius: 100, border: '1px solid var(--border)' }}>{product.unit}</span>
               {product.storageZone && <span style={{ fontSize: 11, background: 'var(--surface-muted)', padding: '5px 10px', borderRadius: 100, border: '1px solid var(--border)' }}>{product.storageZone.code} - {product.storageZone.name}</span>}
+              {product.shop?.lastInventoryUpdate && (
+                <span style={{ fontSize: 10, color: '#059669', background: '#ECFDF5', padding: '4px 8px', borderRadius: 100, border: '1px solid #A7F3D0' }}>
+                  Stock checked {(() => { const d = new Date(product.shop.lastInventoryUpdate); const mins = Math.floor((Date.now() - d.getTime())/60000); if (mins < 1) return 'just now'; if (mins < 60) return `${mins}m ago`; const hrs = Math.floor(mins/60); if (hrs < 24) return `${hrs}h ago`; return `${Math.floor(hrs/24)}d ago`; })()} • Real timestamp per point 23
+                </span>
+              )}
             </div>
+            {product.shop?.lastInventoryUpdate && new Date(product.shop.lastInventoryUpdate).getTime() < Date.now() - 2*60*60*1000 && (
+              <div style={{ marginTop: 8, fontSize: 11, color: '#D97706', background: '#FFFBEB', padding: '6px 10px', borderRadius: 8, border: '1px solid #FDE68A' }}>
+                Availability may need confirmation - stock not verified in last 2 hours per point 24
+              </div>
+            )}
 
             <div style={{ marginTop: 24, background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 20, boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 12, color: 'var(--text-primary)' }}>Quantity — min {product.minOrderQty || 1} {product.unit}</div>
@@ -144,11 +170,17 @@ export default function ProductDetailClient({ id }: { id: string }) {
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatPaise(pricePaise * qty)} total • Real price from shop</span>
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button onClick={addToCart} disabled={outOfStock} style={{ flex: 1, background: outOfStock ? 'var(--surface-muted)' : '#0F766E', color: outOfStock ? 'var(--text-tertiary)' : 'white', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 600, fontSize: 14, cursor: outOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, transition: 'all 0.2s ease', boxShadow: outOfStock ? 'none' : '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+                <button onClick={addToCart} disabled={outOfStock} style={{ flex: 1, minWidth: 140, background: outOfStock ? 'var(--surface-muted)' : '#0F766E', color: outOfStock ? 'var(--text-tertiary)' : 'white', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 600, fontSize: 14, cursor: outOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, transition: 'all 0.2s ease', boxShadow: outOfStock ? 'none' : '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>
                   <ShoppingCart size={18} aria-hidden="true" />{outOfStock ? 'Out of stock' : `Add to cart`}
                 </button>
+                <button onClick={reserveProduct} disabled={outOfStock} title="Reserve before you go - different from pickup per point 34" style={{ flex: 1, minWidth: 140, background: outOfStock ? 'var(--surface-muted)' : 'white', color: outOfStock ? 'var(--text-tertiary)' : '#0F766E', border: outOfStock ? '1px solid var(--border)' : '1px solid #0F766E', borderRadius: 12, padding: '14px 20px', fontWeight: 600, fontSize: 14, cursor: outOfStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48 }}>
+                  <Bookmark size={18} aria-hidden="true" />Reserve • Collect later
+                </button>
                 <button aria-label="Add to favorites" style={{ width: 48, height: 48, background: 'white', border: '1px solid var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 48 }}><Heart size={18} aria-hidden="true" /></button>
+              </div>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.4 }}>
+                Reservation = I will come and collect (stock held until expiry). Pickup = Prepare it for me. Delivery = Bring it to me. Per point 34 distinction.
               </div>
 
               <div style={{ marginTop: 16, display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>

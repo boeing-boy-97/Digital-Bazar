@@ -143,8 +143,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(createErrorResponse('SHOP_NOT_APPROVED', `Shop not approved. Status: ${shop.status}`, requestId, 400), { status: 400 });
     }
     
-    // Shop pause logic - if shop paused, block new orders but existing continue
-    // Check platform_settings or shop businessInfo for pause flag
+    // Shop pause logic per point 58,59 - separate physical open/closed vs online/offline accepting orders
+    // If shop paused online orders, block new orders but existing continue
+    const shopAny = shop as any;
+    if (shopAny.isOnlineOrdersPaused) {
+      return NextResponse.json(createErrorResponse('SHOP_PAUSED', 'Shop temporarily not accepting online orders', requestId, 400, { reason: shopAny.pauseReason, type: 'ONLINE_PAUSED' }), { status: 400 });
+    }
+    if (pickupType === 'PICKUP' && shopAny.isPickupPaused) {
+      return NextResponse.json(createErrorResponse('PICKUP_PAUSED', 'Pickup temporarily paused', requestId, 400, { reason: shopAny.pauseReason }), { status: 400 });
+    }
+    if (pickupType === 'DELIVERY' && shopAny.isDeliveryPaused) {
+      return NextResponse.json(createErrorResponse('DELIVERY_PAUSED', 'Delivery temporarily paused', requestId, 400, { reason: shopAny.pauseReason }), { status: 400 });
+    }
+    // Check legacy businessInfo pause for backward compat
     if (shop.businessInfo) {
       try {
         const info = JSON.parse(shop.businessInfo);
@@ -291,6 +302,17 @@ export async function POST(req: NextRequest) {
 
     const totalPaise = subtotalPaise - discountPaise + taxPaise;
 
+    // Min order enforcement per point 13
+    if ((shop as any).minOrderPaise && subtotalPaise < (shop as any).minOrderPaise) {
+      return NextResponse.json(createErrorResponse('MIN_ORDER_NOT_MET', `Minimum order ${fromPaise((shop as any).minOrderPaise)} required`, requestId, 400, { minOrderPaise: (shop as any).minOrderPaise, subtotalPaise }), { status: 400 });
+    }
+    // Add delivery fee if delivery per point 52,62
+    let deliveryFeePaise = 0;
+    if (pickupType === 'DELIVERY' && (shop as any).deliveryFeePaise) {
+      deliveryFeePaise = (shop as any).deliveryFeePaise;
+    }
+    const finalTotalPaise = totalPaise + deliveryFeePaise;
+
     // Inventory reservation in transaction - critical, concurrency-safe
     // Use Prisma transaction with locking
     try {
@@ -352,7 +374,10 @@ export async function POST(req: NextRequest) {
           subtotalPaise,
           discountPaise,
           taxPaise,
-          totalPaise,
+          totalPaise: (typeof finalTotalPaise !== 'undefined' ? finalTotalPaise : totalPaise),
+          deliveryFeePaise: (typeof deliveryFeePaise !== 'undefined' ? deliveryFeePaise : 0),
+          fulfillmentType: pickupType || 'PICKUP',
+          priceSnapshot: JSON.stringify({ subtotalPaise, discountPaise, taxPaise, deliveryFeePaise: (typeof deliveryFeePaise !== 'undefined' ? deliveryFeePaise : 0), timestamp: new Date().toISOString() }),
           paymentMethod,
           pickupType,
           pickupTime: pickupTime ? new Date(pickupTime) : null,
