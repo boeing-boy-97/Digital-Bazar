@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/common/Header';
 import { BottomNav } from '@/components/common/BottomNav';
-import { formatCurrency, formatDate, orderStatusColor, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { formatDate, orderStatusColor } from '@/lib/utils/helpers';
 import { QrCode, Clock, Package, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function OrderDetailPage() {
@@ -113,7 +114,7 @@ export default function OrderDetailPage() {
                         {items.map((item: any) => (
                           <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)', fontSize: '14px' }}>
                             <span>{item.productName} × {item.quantity}</span>
-                            <span style={{ fontWeight: 500 }}>{formatCurrency(item.subtotal)}</span>
+                            <span style={{ fontWeight: 500 }}>{formatPaise(item.subtotalPaise ?? Math.round((item.subtotal||0)*100))}</span>
                           </div>
                         ))}
                       </div>
@@ -125,16 +126,16 @@ export default function OrderDetailPage() {
                           <div style={{ fontWeight: 500 }}>{item.productName}</div>
                           <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{item.sku} • {item.unit} • Qty {item.quantity}</div>
                         </div>
-                        <div style={{ fontWeight: 600 }}>{formatCurrency(item.subtotal)}</div>
+                        <div style={{ fontWeight: 600 }}>{formatPaise(item.subtotalPaise ?? Math.round((item.subtotal||0)*100))}</div>
                       </div>
                     ))
                   )}
                 </div>
                 <div className="card-footer">
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6, fontSize: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}><span>Discount</span><span>-{formatCurrency(order.discount)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tax</span><span>{formatCurrency(order.tax)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{formatPaise(order.subtotalPaise ?? Math.round((order.subtotal||0)*100))}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}><span>Discount</span><span>-{formatPaise(order.discountPaise ?? Math.round((order.discount||0)*100))}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tax</span><span>{formatPaise(order.taxPaise ?? Math.round((order.tax||0)*100))}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '16px', paddingTop: 8, borderTop: '1px solid var(--border)' }}><span>Total</span><span>{formatPaise(order.totalPaise ?? Math.round((order.total||0)*100))}</span></div>
                   </div>
                 </div>

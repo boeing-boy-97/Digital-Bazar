@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import { Users, ShoppingBag, Search } from 'lucide-react';
 
 export default function ShopCustomers() {
@@ -14,9 +14,9 @@ export default function ShopCustomers() {
   
   const customers = Object.values(orders.reduce((acc:any, o:any)=>{
     const id = o.customerId;
-    if (!acc[id]) acc[id] = { id, name: o.customer?.name || 'Customer', phone: o.customer?.phone, orders: 0, total: 0, lastOrder: o.createdAt };
+    if (!acc[id]) acc[id] = { id, name: o.customer?.name || 'Customer', phone: o.customer?.phone, orders: 0, totalPaise: 0, lastOrder: o.createdAt };
     acc[id].orders++;
-    acc[id].total+=(o.totalPaise ?? Math.round((o.total||0)*100));
+    acc[id].totalPaise+=(o.totalPaise ?? Math.round((o.total||0)*100));
     if (new Date(o.createdAt) > new Date(acc[id].lastOrder)) acc[id].lastOrder = o.createdAt;
     return acc;
   }, {}));
@@ -82,8 +82,8 @@ export default function ShopCustomers() {
                       </div>
                     </td>
                     <td><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ShoppingBag size={12} />{c.orders}</span></td>
-                    <td style={{ fontWeight: 600 }}>{formatPaise(c.totalPaise ?? Math.round((c.total||0)*100))}</td>
-                    <td>{formatCurrency(c.total/c.orders)}</td>
+                    <td style={{ fontWeight: 600 }}>{formatPaise(c.totalPaise)}</td>
+                    <td>{formatPaise(Math.round(c.totalPaise / (c.orders||1)))}</td>
                     <td style={{ fontSize: '13px' }}>{new Date(c.lastOrder).toLocaleDateString()}</td>
                   </tr>
                 ))}

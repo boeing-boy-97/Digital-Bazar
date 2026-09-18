@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { BottomNav } from '@/components/common/BottomNav';
-import { formatCurrency, formatDate, orderStatusColor, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { formatDate, orderStatusColor } from '@/lib/utils/helpers';
 import Link from 'next/link';
 
 export default function OrdersPage() {

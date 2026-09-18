@@ -27,10 +27,22 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
   useEffect(() => { setLocalQ(q); }, [q]);
 
   const getOpenStatus = (shop: any) => {
-    const hour = new Date().getHours();
     if (shop.status !== 'APPROVED') return { isOpen: false, status: 'Unavailable' };
-    if (hour >= 9 && hour < 20) return { isOpen: true, status: 'Open' };
-    return { isOpen: false, status: 'Closed' };
+    // Use structured business hours if available, otherwise fallback to isOpenNow from API
+    if (typeof shop.isOpenNow === 'boolean') {
+      return { isOpen: shop.isOpenNow, status: shop.isOpenNow ? 'Open' : 'Closed' };
+    }
+    // Fallback: check businessHours structured (client-side)
+    try {
+      const bh = shop.businessHours;
+      if (bh && typeof bh === 'object') {
+        // Simple check: if businessHours is object with days, assume open logic handled server-side
+        // Client fallback still needs to avoid hardcoded hours - use timezone-aware check via API isOpenNow
+        return { isOpen: false, status: 'Hours not available' };
+      }
+    } catch {}
+    // Last fallback - never hardcode 9-20, use status only
+    return { isOpen: false, status: shop.status === 'OPEN' ? 'Open' : 'Closed' };
   };
 
   const fetchShops = async () => {

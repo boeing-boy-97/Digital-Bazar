@@ -1,4 +1,5 @@
-import { formatCurrency, formatPaise, formatDate  } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { formatDate } from '@/lib/utils/helpers';
 
 interface InvoiceProps {
   invoice: {

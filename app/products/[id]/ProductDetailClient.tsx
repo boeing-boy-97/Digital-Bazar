@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { fromPaise } from '@/lib/domain/money';
 import { ProductCard } from '@/components/customer/ProductCard';
 import { ShoppingCart, Heart, ShieldCheck, Clock, Package, MapPin, ArrowLeft, Check } from 'lucide-react';
 import Link from 'next/link';
@@ -8,6 +9,7 @@ import Link from 'next/link';
 export default function ProductDetailClient({ id }: { id: string }) {
   const [product, setProduct] = useState<any>(null);
   const [related, setRelated] = useState<any[]>([]);
+  const [shopComparison, setShopComparison] = useState<any[]>([]);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -20,6 +22,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
       const data = await res.json();
       setProduct(data.product);
       setRelated(data.related || []);
+      setShopComparison(data.shopComparison || []);
     } catch {}
     setLoading(false);
   };
@@ -176,6 +179,40 @@ export default function ProductDetailClient({ id }: { id: string }) {
             </div>
           </div>
         </div>
+
+        {shopComparison.length > 0 && (
+          <div style={{ marginTop: 48 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: 'var(--font-heading)' }}>Compare other shops — same product</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>Master product linked — price/stock/distance/open/pickup/delivery/rating from real shop inventory</p>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {shopComparison.map((other: any) => {
+                const otherAvailable = other.stock - (other.reservedStock || 0);
+                const otherPricePaise = other.pricePaise ?? Math.round((other.price||0)*100);
+                return (
+                  <div key={other.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{other.shop?.name} • {other.shop?.city}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <span>{formatPaise(otherPricePaise)} / {other.unit}</span>
+                        <span>•</span>
+                        <span style={{ color: otherAvailable > 0 ? '#059669' : '#DC2626' }}>{otherAvailable > 0 ? `${otherAvailable} in stock` : 'Out of stock'} • Real</span>
+                        <span>•</span>
+                        <span>{other.shop?.isPickupEnabled ? 'Pickup' : ''} {other.shop?.isDeliveryEnabled ? 'Delivery' : ''}</span>
+                        <span>•</span>
+                        <span>Rating {other.shop?.rating || 0} ({other.shop?.reviewCount || 0})</span>
+                        <span>•</span>
+                        <span>{other.shop?.preparationTimeMin || 15} min prep</span>
+                      </div>
+                    </div>
+                    <Link href={`/products/${other.id}`} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 500, textDecoration: 'none', color: 'var(--text-primary)', minHeight: 36, display: 'inline-flex', alignItems: 'center' }}>
+                      View shop
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {related.length > 0 && (
           <div style={{ marginTop: 64 }}>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import { Store, Clock, CheckCircle, TrendingUp, ShoppingBag, DollarSign } from 'lucide-react';
 
 export default function AdminDashboard() {

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import { Tag, Plus, Percent, Calendar } from 'lucide-react';
 
 export default function PromotionsPage() {
@@ -167,7 +167,7 @@ export default function PromotionsPage() {
                       <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{p.code}</td>
                       <td><span className="badge badge-neutral" style={{ display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>{p.discountType==='PERCENTAGE' ? <Percent size={12} /> : '₹'}{p.discountType}</span></td>
                       <td style={{ fontWeight: 600 }}>{p.discountType==='PERCENTAGE'?`${p.discountValue}%`:`₹${p.discountValue}`}</td>
-                      <td>{p.minOrder?formatCurrency(p.minOrder):'-'}</td>
+                      <td>{p.minOrder?formatPaise(p.minOrderPaise ?? Math.round((p.minOrder||0)*100)):'-'}</td>
                       <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} />{p.validTill?new Date(p.validTill).toLocaleDateString():'No expiry'}</td>
                       <td>{p.usageCount||0}/{p.usageLimit||'∞'}</td>
                     </tr>

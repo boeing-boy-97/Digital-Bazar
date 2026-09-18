@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import { TrendingUp, ShoppingBag, BarChart3, AlertTriangle } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -80,7 +80,7 @@ export default function AnalyticsPage() {
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <TrendingUp size={12} /> Total sales
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{formatCurrency(totalSales)}</div>
+                  <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{formatPaise(totalSales)}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 4 }}>{completed.length} completed orders</div>
                 </div>
                 <div style={{ width: 36, height: 36, background: 'var(--success-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Average order value</div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{completed.length ? formatCurrency(avgOrder) : '—'}</div>
+                  <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{completed.length ? formatPaise(avgOrder) : '—'}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 4 }}>{completed.length ? 'Based on completed orders' : 'No completed orders yet'}</div>
                 </div>
                 <div style={{ width: 36, height: 36, background: 'var(--info-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info)' }}>

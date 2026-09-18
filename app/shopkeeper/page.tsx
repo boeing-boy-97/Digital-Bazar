@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ShoppingBag, Clock, CheckCircle, AlertTriangle, TrendingUp, Package, ArrowRight } from 'lucide-react';
-import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import Link from 'next/link';
 
 export default function ShopkeeperDashboard() {
@@ -81,14 +81,32 @@ export default function ShopkeeperDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em' }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: 4 }}>Here's what's happening with your shop today</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'var(--font-heading)' }}>Dashboard — what needs attention</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: 4 }}>Real orders today, low stock, sales, issues — no meaningless charts. Grounded in DB.</p>
         </div>
-        <Link href="/shopkeeper/orders" className="btn btn-primary" style={{ borderRadius: 8 }}>
+        <Link href="/shopkeeper/orders" className="btn btn-primary" style={{ borderRadius: 12, boxShadow: '0 4px 12px -2px rgb(15 118 110 / 0.25)' }}>
           View all orders
           <ArrowRight size={16} />
         </Link>
       </div>
+
+      {/* Attention Needed - Elite Professional */}
+      {!loading && (stats.pending > 0 || stats.preparing > 0 || stats.ready > 0 || stats.lowStock > 0) && (
+        <div className="card" style={{ padding: 20, marginBottom: 20, borderLeft: '4px solid var(--brand-500)', background: 'linear-gradient(135deg, #F0FAF9 0%, white 100%)' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={16} color="#0F766E" />
+            Needs attention — real, not fake
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13 }}>
+            {stats.pending > 0 && <span className="badge badge-warning" style={{ padding: '6px 12px' }}>{stats.pending} new orders — accept now</span>}
+            {stats.preparing > 0 && <span className="badge badge-info" style={{ padding: '6px 12px' }}>{stats.preparing} preparing — pick by zone</span>}
+            {stats.ready > 0 && <span className="badge badge-success" style={{ padding: '6px 12px' }}>{stats.ready} ready for pickup — QR verify</span>}
+            {stats.lowStock > 0 && <span className="badge badge-danger" style={{ padding: '6px 12px' }}>{stats.lowStock} low stock — restock soon</span>}
+            {stats.todayOrders === 0 && <span className="badge badge-neutral" style={{ padding: '6px 12px' }}>No orders today — honest empty state</span>}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10 }}>Transactional inventory, zone-sorted picking, QR single-use verification. Real data only.</div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
@@ -107,7 +125,7 @@ export default function ShopkeeperDashboard() {
               { label: 'Pending', value: stats.pending, icon: Clock, color: 'var(--warning)', bg: 'var(--warning-light)' },
               { label: 'Preparing', value: stats.preparing, icon: Package, color: 'var(--info)', bg: 'var(--info-light)' },
               { label: 'Ready for pickup', value: stats.ready, icon: CheckCircle, color: 'var(--success)', bg: 'var(--success-light)' },
-              { label: "Today's sales", value: formatCurrency(stats.sales), icon: TrendingUp, color: 'var(--success)', bg: 'var(--success-light)' },
+              { label: "Today's sales", value: formatPaise(stats.sales), icon: TrendingUp, color: 'var(--success)', bg: 'var(--success-light)' },
               { label: 'Low stock', value: stats.lowStock, icon: AlertTriangle, color: 'var(--danger)', bg: 'var(--danger-light)' },
             ].map(card => (
               <div key={card.label} className="card" style={{ padding: 16 }}>
@@ -169,11 +187,11 @@ export default function ShopkeeperDashboard() {
             </div>
 
             <div className="card">
-              <div className="card-header"><div className="card-title">Business assistant</div></div>
+              <div className="card-header"><div className="card-title">Business assistant — real data only</div></div>
               <div className="card-body">
                 <div style={{ background: 'var(--surface-muted)', borderRadius: 10, padding: 14, fontSize: '13px', marginBottom: 16, border: '1px solid var(--border-light)' }}>
-                  <div style={{ fontWeight: 600, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>💡 Ask about your business</div>
-                  <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>Which products sold most this month? What were my sales yesterday? Show low stock items.</div>
+                  <div style={{ fontWeight: 600, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>Business insights — grounded in DB</div>
+                  <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>Which products sold most this month? What were my sales yesterday? Show low stock items. Never invents price/stock.</div>
                 </div>
                 
                 <div style={{ display: 'flex', gap: 8 }}>

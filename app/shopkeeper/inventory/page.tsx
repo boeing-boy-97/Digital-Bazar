@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { calculateAvailable, isLowStock, forecastStockout } from '@/lib/domain/inventory';
 import { Package, AlertTriangle, TrendingDown, DollarSign, Search } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -37,18 +38,20 @@ export default function InventoryPage() {
 
   const forecastLowStock = (p: any) => {
     const completedOrders = orders.filter(o=>o.status==='COMPLETED');
-    
-    if (completedOrders.length < 5) {
-      return { daysLeft: null, confidence: 'low', dailyAvg: null };
-    }
-
-    const dailyAvg = Math.max(0.5, p.lowStockThreshold / 7);
-    const daysLeft = p.stock > 0 ? Math.floor(p.stock / dailyAvg) : 0;
-    
-    return { 
-      daysLeft, 
-      confidence: completedOrders.length >= 20 ? 'high' : completedOrders.length >= 10 ? 'medium' : 'low',
-      dailyAvg: dailyAvg.toFixed(1)
+    const thirtyDaysAgo = Date.now() - 30*24*60*60*1000;
+    const recentOrders = completedOrders.filter((o:any) => new Date(o.createdAt).getTime() > thirtyDaysAgo);
+    const totalSold = recentOrders.reduce((sum:number, o:any) => {
+      const item = o.items?.find((i:any) => i.productId === p.id);
+      return sum + (item?.quantity || 0);
+    }, 0);
+    const dailyVelocity = recentOrders.length > 0 ? totalSold / 30 : 0;
+    const available = calculateAvailable(p.stock, p.reservedStock || 0);
+    const forecast = forecastStockout(available, dailyVelocity, 0);
+    return {
+      daysLeft: forecast.days,
+      message: forecast.message,
+      confidence: forecast.confidence,
+      dailyAvg: dailyVelocity > 0 ? dailyVelocity.toFixed(1) : null
     };
   };
 
@@ -125,7 +128,7 @@ export default function InventoryPage() {
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <DollarSign size={12} /> Inventory value
               </div>
-              <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{formatCurrency(products.reduce((sum,p)=>sum+p.price*p.stock,0))}</div>
+              <div style={{ fontSize: '22px', fontWeight: 700, marginTop: 6 }}>{formatPaise(products.reduce((sum,p)=>sum+(p.pricePaise ?? Math.round((p.price||0)*100)) * p.stock,0))}</div>
             </div>
             <div style={{ width: 36, height: 36, background: 'var(--success-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
               <DollarSign size={18} />
@@ -187,7 +190,7 @@ export default function InventoryPage() {
                          <span className="badge badge-success">{forecast.daysLeft} days</span>}
                         {forecast.dailyAvg && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>~{forecast.dailyAvg}/day</div>}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{formatCurrency(p.price * p.stock)}</td>
+                      <td style={{ fontWeight: 600 }}>{formatPaise((p.pricePaise ?? Math.round((p.price||0)*100)) * p.stock)}</td>
                     </tr>
                   );
                 })}

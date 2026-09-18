@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/jwt';
 import { shopCreateSchema } from '@/lib/validation/schemas';
 import { slugify } from '@/lib/utils/helpers';
+import { isShopOpen as isShopOpenDomain } from '@/lib/domain/business-hours';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -45,11 +46,27 @@ export async function GET(req: NextRequest) {
     take: 50
   });
 
-  let shopsWithDistance = shops.map(s => ({
-    ...s,
-    distance: undefined as number | undefined,
-    isOpen: isShopOpen((s as any).businessHours || [], (s as any).holidays || [], (s as any).timezone || 'Asia/Kolkata')
-  }));
+  let shopsWithDistance = shops.map(s => {
+    // Convert old businessHours array format to domain format if needed
+    const bhArray = (s as any).businessHours || [];
+    const domainBH: any = {};
+    const dayMap = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    for (const bh of bhArray) {
+      const dayName = dayMap[bh.dayOfWeek] || 'monday';
+      if (!domainBH[dayName]) domainBH[dayName] = [];
+      if (!bh.isClosed && bh.openTime && bh.closeTime) {
+        domainBH[dayName].push({ open: bh.openTime, close: bh.closeTime });
+      }
+    }
+    const hasStructured = Object.keys(domainBH).length > 0;
+    const isOpen = hasStructured ? isShopOpenDomain(domainBH, (s as any).holidays || [], (s as any).timezone || 'Asia/Kolkata') : false;
+    return {
+      ...s,
+      distance: undefined as number | undefined,
+      isOpen,
+      isOpenNow: isOpen
+    };
+  });
 
   if (lat && lng) {
     const latNum = parseFloat(lat);
@@ -66,7 +83,19 @@ export async function GET(req: NextRequest) {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         distance = R * c;
       }
-      return { ...shop, distance, isOpen: isShopOpen((shop as any).businessHours || [], (shop as any).holidays || [], (shop as any).timezone || 'Asia/Kolkata') };
+      const bhArray = (shop as any).businessHours || [];
+      const domainBH: any = {};
+      const dayMap = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      for (const bh of bhArray) {
+        const dayName = dayMap[bh.dayOfWeek] || 'monday';
+        if (!domainBH[dayName]) domainBH[dayName] = [];
+        if (!bh.isClosed && bh.openTime && bh.closeTime) {
+          domainBH[dayName].push({ open: bh.openTime, close: bh.closeTime });
+        }
+      }
+      const hasStructured = Object.keys(domainBH).length > 0;
+      const isOpen = hasStructured ? isShopOpenDomain(domainBH, (shop as any).holidays || [], (shop as any).timezone || 'Asia/Kolkata') : false;
+      return { ...shop, distance, isOpen, isOpenNow: isOpen };
     }).sort((a,b) => (a.distance||999)-(b.distance||999));
   }
 

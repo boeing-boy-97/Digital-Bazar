@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { fromPaise } from '@/lib/domain/money';
 import { Plus, Heart, Minus, Package } from 'lucide-react';
 import { useState } from 'react';
 

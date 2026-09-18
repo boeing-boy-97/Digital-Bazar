@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatCurrency, formatPaise, formatDate } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { formatDate } from '@/lib/utils/helpers';
 import { QrCode, Package, Check } from 'lucide-react';
 
 export default function ShopkeeperOrderDetail() {
@@ -119,7 +120,7 @@ export default function ShopkeeperOrderDetail() {
               {order.items.map((item:any)=>(
                 <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)', fontSize: '14px' }}>
                   <span>{item.productName} × {item.quantity}</span>
-                  <span>{formatCurrency(item.subtotal)}</span>
+                  <span>{formatPaise(item.subtotalPaise ?? Math.round((item.subtotal||0)*100))}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>

@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { EliteHeader } from '@/components/layout/EliteHeader';
 import { EliteFooter } from '@/components/layout/EliteFooter';
-import { formatCurrency, formatPaise, fromPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { fromPaise } from '@/lib/domain/money';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Package, ShieldCheck, Clock, MapPin } from 'lucide-react';
 import Link from 'next/link';
 

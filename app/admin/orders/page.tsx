@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatPaise, formatDate } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
+import { formatDate } from '@/lib/utils/helpers';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<any[]>([]);

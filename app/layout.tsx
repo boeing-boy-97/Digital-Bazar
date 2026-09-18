@@ -6,8 +6,10 @@ import '@/styles/forms.css';
 import '@/styles/tables.css';
 import '@/styles/responsive.css';
 import '@/styles/elite-polish.css';
+import '@/styles/elite-v4.css';
 import { validateEnv } from '@/lib/env/validation';
 import { CookieConsent } from '@/components/layout/CookieConsent';
+import { BottomNav } from '@/components/layout/BottomNav';
 
 try {
   validateEnv();
@@ -60,7 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#0F766E" />
       </head>
       <body>
-        <div id="main-content">{children}</div>
+        <div id="main-content" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>{children}</div>
+        <BottomNav />
         <CookieConsent />
       </body>
     </html>

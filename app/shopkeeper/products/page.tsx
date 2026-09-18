@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { formatCurrency, formatPaise } from '@/lib/utils/helpers';
+import { formatPaise } from '@/lib/domain/money';
 import { Plus, Search, Package, Sparkles, MapPin, Tag } from 'lucide-react';
 
 export default function ShopkeeperProducts() {
