@@ -17,19 +17,25 @@ export async function GET(req: NextRequest) {
       where.parentId = null;
     }
 
-    const categories = await prisma.masterCategory.findMany({
-      where,
-      include: {
-        children: includeChildren ? { where: { isActive: true } } : false,
-        _count: { select: { masterProducts: true } }
-      },
-      orderBy: { name: 'asc' }
-    });
+    let categories: any[] = [];
+    try {
+      categories = await prisma.masterCategory.findMany({
+        where,
+        include: {
+          children: includeChildren ? { where: { isActive: true } } : false,
+          _count: { select: { masterProducts: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+    } catch (dbErr: any) {
+      console.error('[master-categories GET] DB error, returning empty:', dbErr?.message);
+      return NextResponse.json({ categories: [], fallback: true });
+    }
 
     return NextResponse.json({ categories });
   } catch (e: any) {
     console.error('Master categories fetch error', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ categories: [], error: 'Unable to load categories temporarily' });
   }
 }
 

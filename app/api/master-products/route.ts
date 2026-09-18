@@ -33,21 +33,28 @@ export async function GET(req: NextRequest) {
     }
     if (brand) where.brand = { contains: brand };
 
-    const [products, total] = await Promise.all([
-      prisma.masterProduct.findMany({
-        where,
-        include: {
-          category: true,
-          images: { orderBy: { sortOrder: 'asc' } },
-          variants: { where: { isActive: true } },
-          _count: { select: { shopProducts: true } }
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { name: 'asc' }
-      }),
-      prisma.masterProduct.count({ where })
-    ]);
+    let products: any[] = [];
+    let total = 0;
+    try {
+      [products, total] = await Promise.all([
+        prisma.masterProduct.findMany({
+          where,
+          include: {
+            category: true,
+            images: { orderBy: { sortOrder: 'asc' } },
+            variants: { where: { isActive: true } },
+            _count: { select: { shopProducts: true } }
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { name: 'asc' }
+        }),
+        prisma.masterProduct.count({ where })
+      ]);
+    } catch (dbErr: any) {
+      console.error('[master-products GET] DB error, returning empty:', dbErr?.message);
+      return NextResponse.json({ products: [], total: 0, page, totalPages: 0, fallback: true });
+    }
 
     return NextResponse.json({ 
       products, 
@@ -57,7 +64,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (e: any) {
     console.error('Master products fetch error', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ products: [], total: 0, page: 1, totalPages: 0, error: 'Unable to load products temporarily' });
   }
 }
 

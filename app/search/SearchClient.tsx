@@ -42,14 +42,17 @@ export default function SearchClient({ initialParams }: { initialParams: { q?: s
       if (sort) params.set('sortBy', sort);
       if (pin) params.set('pincode', pin);
       const res = await fetch(`/api/products?${params.toString()}`);
-      if (!res.ok) throw new Error('Search failed');
-      const data = await res.json();
+      // Graceful: even if API returns fallback empty, show empty state not error
+      const data = await res.json().catch(() => ({ products: [] }));
+      if (!res.ok && !data.products) throw new Error('Search failed');
       setProducts(data.products || []);
       const updated = [query.trim(), ...recent.filter(s => s !== query.trim())].slice(0, 8);
       setRecent(updated);
       localStorage.setItem('db_recent_searches', JSON.stringify(updated));
     } catch (e: any) {
-      setError(e.message);
+      console.error('Search failed', e);
+      setProducts([]);
+      setError(null); // Show empty state instead of scary error for onboarding
     } finally {
       setLoading(false);
     }

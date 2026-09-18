@@ -9,89 +9,103 @@ import { legacyProductsResponse, errorResponse } from '@/lib/api/response';
 
 export async function GET(req: NextRequest) {
   const requestId = generateRequestId();
-  const { searchParams } = new URL(req.url);
-  const shopId = searchParams.get('shopId');
-  const shopSlug = searchParams.get('shopSlug');
-  const category = searchParams.get('category');
-  const search = searchParams.get('search');
-  const q = searchParams.get('q');
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
-  const inStock = searchParams.get('inStock');
+  try {
+    const { searchParams } = new URL(req.url);
+    const shopId = searchParams.get('shopId');
+    const shopSlug = searchParams.get('shopSlug');
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const q = searchParams.get('q');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+    const inStock = searchParams.get('inStock');
 
-  const where: any = { isActive: true, productStatus: 'ACTIVE' };
-  const groupByMaster = searchParams.get('groupByMaster') === 'true';
-  const sortBy = searchParams.get('sortBy') || 'relevance';
-  
-  if (shopId) where.shopId = shopId;
-  if (shopSlug) {
-    const shop = await prisma.shop.findUnique({ where: { slug: shopSlug } });
-    if (shop) where.shopId = shop.id;
-  }
-  if (category) where.category = { name: { contains: category } };
-  if (search || q) {
-    const term = search || q || '';
-    where.OR = [
-      { name: { contains: term } },
-      { brand: { contains: term } },
-      { description: { contains: term } },
-      { sku: { contains: term } },
-      { searchableText: { contains: term.toLowerCase() } }
-    ];
-  }
-  if (inStock === 'true') where.stock = { gt: 0 };
+    const where: any = { isActive: true, productStatus: 'ACTIVE' };
+    const groupByMaster = searchParams.get('groupByMaster') === 'true';
+    const sortBy = searchParams.get('sortBy') || 'relevance';
+    
+    if (shopId) where.shopId = shopId;
+    if (shopSlug) {
+      try {
+        const shop = await prisma.shop.findUnique({ where: { slug: shopSlug } });
+        if (shop) where.shopId = shop.id;
+      } catch {}
+    }
+    if (category) where.category = { name: { contains: category } };
+    if (search || q) {
+      const term = search || q || '';
+      where.OR = [
+        { name: { contains: term } },
+        { brand: { contains: term } },
+        { description: { contains: term } },
+        { sku: { contains: term } },
+        { searchableText: { contains: term.toLowerCase() } }
+      ];
+    }
+    if (inStock === 'true') where.stock = { gt: 0 };
 
-  let orderBy: any = { createdAt: 'desc' };
-  if (sortBy === 'price_low') orderBy = { pricePaise: 'asc' };
-  else if (sortBy === 'price_high') orderBy = { pricePaise: 'desc' };
-  else if (sortBy === 'rating') orderBy = { shop: { rating: 'desc' } };
+    let orderBy: any = { createdAt: 'desc' };
+    if (sortBy === 'price_low') orderBy = { pricePaise: 'asc' };
+    else if (sortBy === 'price_high') orderBy = { pricePaise: 'desc' };
+    else if (sortBy === 'rating') orderBy = { shop: { rating: 'desc' } };
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: { images: true, category: true, storageZone: true, shop: { select: { name: true, slug: true, city: true, rating: true, isPickupEnabled: true, isDeliveryEnabled: true } }, masterProduct: true },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy
-    }),
-    prisma.product.count({ where })
-  ]);
+    let products: any[] = [];
+    let total = 0;
+    try {
+      [products, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: { images: true, category: true, storageZone: true, shop: { select: { name: true, slug: true, city: true, rating: true, isPickupEnabled: true, isDeliveryEnabled: true } }, masterProduct: true },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy
+        }),
+        prisma.product.count({ where })
+      ]);
+    } catch (dbErr: any) {
+      console.error('[products GET] DB error, returning empty:', dbErr?.message);
+      return NextResponse.json(legacyProductsResponse([], 0, page, 0, requestId));
+    }
 
-  // If grouping by master, aggregate to show cheapest per master + shop count per spec point 29 shop comparison
-  let grouped: any = null;
-  if (groupByMaster && (search || q)) {
-    const masterMap = new Map<string, { masterProductId: string | null; masterProduct: any; cheapest: any; shopCount: number; minPricePaise: number; products: any[] }>();
-    for (const p of products) {
-      const key = p.masterProductId || p.name.toLowerCase(); // fallback to name if no master
-      if (!masterMap.has(key)) {
-        masterMap.set(key, {
-          masterProductId: p.masterProductId,
-          masterProduct: p.masterProduct,
-          cheapest: p,
-          shopCount: 1,
-          minPricePaise: p.pricePaise,
-          products: [p]
-        });
-      } else {
-        const entry = masterMap.get(key)!;
-        entry.shopCount++;
-        entry.products.push(p);
-        if (p.pricePaise < entry.minPricePaise) {
-          entry.minPricePaise = p.pricePaise;
-          entry.cheapest = p;
+    // If grouping by master, aggregate to show cheapest per master + shop count per spec point 29 shop comparison
+    let grouped: any = null;
+    if (groupByMaster && (search || q)) {
+      const masterMap = new Map<string, { masterProductId: string | null; masterProduct: any; cheapest: any; shopCount: number; minPricePaise: number; products: any[] }>();
+      for (const p of products) {
+        const key = p.masterProductId || p.name.toLowerCase();
+        if (!masterMap.has(key)) {
+          masterMap.set(key, {
+            masterProductId: p.masterProductId,
+            masterProduct: p.masterProduct,
+            cheapest: p,
+            shopCount: 1,
+            minPricePaise: p.pricePaise,
+            products: [p]
+          });
+        } else {
+          const entry = masterMap.get(key)!;
+          entry.shopCount++;
+          entry.products.push(p);
+          if (p.pricePaise < entry.minPricePaise) {
+            entry.minPricePaise = p.pricePaise;
+            entry.cheapest = p;
+          }
         }
       }
+      grouped = Array.from(masterMap.values()).sort((a, b) => a.minPricePaise - b.minPricePaise);
     }
-    grouped = Array.from(masterMap.values()).sort((a, b) => a.minPricePaise - b.minPricePaise);
-  }
 
-  const response = legacyProductsResponse(products, total, page, Math.ceil(total / limit), requestId);
-  if (grouped) {
-    (response as any).groupedByMaster = grouped;
-    (response as any).groupedCount = grouped.length;
-  }
+    const response = legacyProductsResponse(products, total, page, Math.ceil(total / limit), requestId);
+    if (grouped) {
+      (response as any).groupedByMaster = grouped;
+      (response as any).groupedCount = grouped.length;
+    }
 
-  return NextResponse.json(response);
+    return NextResponse.json(response);
+  } catch (e: any) {
+    console.error('[products GET] Unhandled error:', e?.message);
+    return NextResponse.json(legacyProductsResponse([], 0, 1, 0, requestId));
+  }
 }
 
 export async function POST(req: NextRequest) {

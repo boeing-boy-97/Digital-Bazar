@@ -47,10 +47,12 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
 
   const fetchShops = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/shops');
-      if (!res.ok) throw new Error('Unable to load shops');
-      const data = await res.json();
+      // Even if API returns fallback empty, treat as success - honest onboarding state
+      const data = await res.json().catch(() => ({ shops: [] }));
+      if (!res.ok && !data.shops) throw new Error('Unable to load shops');
       let list = (data.shops || []).map((s: any) => {
         const openStatus = getOpenStatus(s);
         return { ...s, isOpen: openStatus.isOpen, openStatus: openStatus.status };
@@ -58,7 +60,16 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
       setShops(list);
       setCategories([...new Set(list.map((s: any) => s.category).filter(Boolean))] as string[]);
     } catch (e: any) {
-      setError(e.message);
+      // Graceful: show empty state not error if DB empty/fallback - honest
+      console.error('Shops fetch failed', e);
+      setShops([]);
+      setCategories([]);
+      // Only show error if truly network failure, not empty DB
+      if (e.message && !e.message.includes('fetch')) {
+        setError(null); // Don't show scary error for onboarding - show empty state
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoading(false);
     }

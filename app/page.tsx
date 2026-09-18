@@ -150,7 +150,8 @@ export default function HomePage() {
                   margin: 0,
                   fontFamily: 'var(--font-heading)'
                 }}>
-                  Know it is in stock<br />
+                  Know it is in stock
+                  <br />
                   <span style={{ color: '#0F766E' }}>before you leave the house.</span>
                 </h1>
 
@@ -212,7 +213,7 @@ export default function HomePage() {
                     >Search</button>
                   </div>
                   <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span>Try:</span>
+                    <span style={{ fontWeight: 500 }}>Try:</span>
                     {['cement', 'PVC pipe', 'paracetamol', 'paint'].map(term => (
                       <button 
                         key={term}
@@ -225,7 +226,8 @@ export default function HomePage() {
                           padding: '4px 10px', 
                           fontSize: 11, 
                           cursor: 'pointer',
-                          color: 'var(--text-secondary)'
+                          color: 'var(--text-secondary)',
+                          minHeight: 24
                         }}
                       >{term}</button>
                     ))}
@@ -353,17 +355,17 @@ export default function HomePage() {
           <div className="blinkit-stats-grid">
             <div className="blinkit-stat-card">
               <div className="blinkit-stat-icon"><Store size={20} /></div>
-              <div className="blinkit-stat-number">{counts.shops > 0 ? `${counts.shops}` : '0'}+</div>
-              <div className="blinkit-stat-label">Verified shops in Nagpur • Real photos only, no placeholders</div>
+              <div className="blinkit-stat-number" style={counts.shops === 0 ? { fontSize: '18px', lineHeight: 1.2 } : undefined}>{counts.shops > 0 ? `${counts.shops}+` : 'Onboarding'}</div>
+              <div className="blinkit-stat-label">{counts.shops > 0 ? 'Verified shops in Nagpur • Real photos only' : 'First shops joining • Real photos only, no placeholders • Nagpur'}</div>
             </div>
             <div className="blinkit-stat-card">
               <div className="blinkit-stat-icon"><Package size={20} /></div>
-              <div className="blinkit-stat-number">{counts.products > 0 ? `${counts.products}` : '0'}+</div>
-              <div className="blinkit-stat-label">Products from real inventory • From shop counter, not warehouse</div>
+              <div className="blinkit-stat-number" style={counts.products === 0 ? { fontSize: '18px', lineHeight: 1.2 } : undefined}>{counts.products > 0 ? `${counts.products}+` : 'Real stock'}</div>
+              <div className="blinkit-stat-label">{counts.products > 0 ? 'Products from real inventory • From shop counter' : 'Real inventory from shop counter • No fake stock, onboarding'}</div>
             </div>
             <div className="blinkit-stat-card">
               <div className="blinkit-stat-icon"><Layers size={20} /></div>
-              <div className="blinkit-stat-number">{counts.categories > 0 ? `${counts.categories}` : '8'}+</div>
+              <div className="blinkit-stat-number">{counts.categories > 0 ? `${counts.categories}+` : '8+'}</div>
               <div className="blinkit-stat-label">Categories • Medical to hardware, all local needs covered</div>
             </div>
             <div className="blinkit-stat-card">
