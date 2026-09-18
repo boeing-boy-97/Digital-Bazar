@@ -140,7 +140,7 @@ export default function CartPage() {
                         <div style={{ width: 56, height: 56, background: 'var(--surface-muted)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0 }}>
                           {item.product.images?.[0] ? <img src={item.product.images[0].url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : <Package size={20} color="var(--text-tertiary)" aria-hidden="true" />}
                         </div>
-                        <div style={{ flex: 1, minWidth: 120 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>{item.product.name}</div>
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
                             <span>{item.product.brand}</span>

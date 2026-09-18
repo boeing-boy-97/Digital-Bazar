@@ -116,7 +116,7 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
 
           <div style={{ marginTop: 24, background: 'var(--surface-muted)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <form onSubmit={e => { e.preventDefault(); updateURL({ q: localQ || undefined }); }} style={{ position: 'relative', flex: 1, minWidth: 220, display: 'flex', gap: 8 }}>
+              <form onSubmit={e => { e.preventDefault(); updateURL({ q: localQ || undefined }); }} style={{ position: 'relative', flex: 1, minWidth: 0, display: 'flex', gap: 8 }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} aria-hidden="true" />
                   <input value={localQ} onChange={e => setLocalQ(e.target.value)} placeholder="Search shops by name, category or area" aria-label="Search shops" style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 14, background: 'white', outline: 'none', minHeight: 40 }} />
@@ -124,7 +124,7 @@ export default function ShopsClient({ initialParams }: { initialParams: { catego
                 <button type="submit" style={{ background: '#0F766E', color: 'white', border: 'none', borderRadius: 10, padding: '10px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 40 }}>Search</button>
               </form>
               <input value={pincode} onChange={e => updateURL({ pincode: e.target.value || undefined })} placeholder="Pincode" aria-label="Filter by pincode" style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13, background: 'white', width: 120, minHeight: 40 }} />
-              <select value={category} onChange={e => updateURL({ category: e.target.value || undefined })} aria-label="Filter by category" style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13, background: 'white', minWidth: 160, minHeight: 40 }}>
+              <select value={category} onChange={e => updateURL({ category: e.target.value || undefined })} aria-label="Filter by category" style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13, background: 'white', minWidth: 0, minHeight: 40 }}>
                 <option value="">All categories</option>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>

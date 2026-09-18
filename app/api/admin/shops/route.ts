@@ -4,33 +4,45 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/jwt';
 
 export async function GET(req: NextRequest) {
-  const cookieStore = cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const payload = verifyToken(token);
-  if (!payload || !['admin','super_admin'].includes(payload.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const payload = verifyToken(token);
+    if (!payload || !['admin','super_admin'].includes(payload.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status');
+
+    const where: any = {};
+    if (status) where.status = status;
+
+    let shops: any[] = [];
+    try {
+      shops = await prisma.shop.findMany({
+        where,
+        include: {
+          owner: { select: { name: true, phone: true, email: true } },
+          _count: { select: { products: true, orders: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    } catch (dbErr: any) {
+      console.error('[admin shops GET] DB error:', dbErr?.message);
+      return NextResponse.json({ shops: [], error: 'Unable to load shops temporarily' });
+    }
+
+    return NextResponse.json({ shops });
+  } catch (e: any) {
+    console.error('[admin shops GET] Unhandled:', e?.message);
+    return NextResponse.json({ shops: [], error: 'Unable to load shops temporarily' });
   }
-
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get('status');
-
-  const where: any = {};
-  if (status) where.status = status;
-
-  const shops = await prisma.shop.findMany({
-    where,
-    include: {
-      owner: { select: { name: true, phone: true, email: true } },
-      _count: { select: { products: true, orders: true } }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  return NextResponse.json({ shops });
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const cookieStore = cookies();
   const token = cookieStore.get('auth-token')?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -119,4 +131,9 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ shop, message: `Shop ${action}d successfully` });
+
+  } catch (e: any) {
+    console.error('[admin shops POST] Error:', e?.message);
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

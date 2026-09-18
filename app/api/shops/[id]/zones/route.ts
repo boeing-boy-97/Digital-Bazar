@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/auth/jwt';
 import { generateRequestId, createErrorResponse, logStructured } from '@/lib/utils/requestId';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
   const requestId = generateRequestId();
   const cookieStore = cookies();
   const token = cookieStore.get('auth-token')?.value;
@@ -33,6 +34,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   });
 
   return NextResponse.json({ zones, requestId });
+
+  } catch (e: any) {
+    console.error('[shops zones GET] Error:', e?.message);
+    return NextResponse.json({ error: 'Unable to load zones' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {

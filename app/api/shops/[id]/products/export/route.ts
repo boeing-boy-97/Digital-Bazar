@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/auth/jwt';
 import { generateRequestId, createErrorResponse } from '@/lib/utils/requestId';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
   const requestId = generateRequestId();
   const cookieStore = cookies();
   const token = cookieStore.get('auth-token')?.value;
@@ -95,4 +96,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       'X-Request-Id': requestId
     }
   });
+
+  } catch (e: any) {
+    console.error('[shops export GET] Error:', e?.message);
+    return NextResponse.json({ error: 'Unable to export products' }, { status: 500 });
+  }
 }

@@ -2,60 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const product = await prisma.product.findUnique({
-    where: { id: params.id },
-    include: {
-      images: true,
-      category: true,
-      storageZone: true,
-      shop: { include: { businessHours: true, holidays: true } },
-      variants: true,
-      masterProduct: true
+  try {
+    let product: any = null;
+    try {
+      product = await prisma.product.findUnique({
+        where: { id: params.id },
+        include: {
+          images: true,
+          category: true,
+          storageZone: true,
+          shop: { include: { businessHours: true, holidays: true } },
+          variants: true,
+          masterProduct: true
+        }
+      });
+    } catch (dbErr: any) {
+      console.error('[products id GET] DB error:', dbErr?.message);
+      return NextResponse.json({ error: 'Unable to load product temporarily' }, { status: 500 });
     }
-  });
 
-  if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
-  // Related products same shop category
-  const related = await prisma.product.findMany({
-    where: {
-      shopId: product.shopId,
-      categoryId: product.categoryId,
-      id: { not: product.id },
-      isActive: true
-    },
-    include: { images: true, shop: { select: { name: true } } },
-    take: 4
-  });
-
-  // Shop comparison - other shops selling same master product per point 10, 49
-  let shopComparison: any[] = [];
-  if ((product as any).masterProductId) {
-    shopComparison = await prisma.product.findMany({
-      where: {
-        masterProductId: (product as any).masterProductId,
-        id: { not: product.id },
-        isActive: true,
-        shop: { status: 'APPROVED' }
-      },
-      include: {
-        shop: { 
-          select: { 
-            id: true, name: true, slug: true, address: true, city: true, rating: true, reviewCount: true,
-            isPickupEnabled: true, isDeliveryEnabled: true, preparationTimeMin: true,
-            latitude: true, longitude: true,
-            businessHours: true, holidays: true, timezone: true
-          } 
+    let related: any[] = [];
+    try {
+      related = await prisma.product.findMany({
+        where: {
+          shopId: product.shopId,
+          categoryId: product.categoryId,
+          id: { not: product.id },
+          isActive: true
         },
-        images: { take: 1 }
-      },
-      take: 10,
-      orderBy: { pricePaise: 'asc' }
-    });
-  }
+        include: { images: true, shop: { select: { name: true } } },
+        take: 4
+      });
+    } catch {}
 
-  return NextResponse.json({ product, related, shopComparison });
+    return NextResponse.json({ product, related });
+  } catch (e: any) {
+    console.error('[products id GET] Unhandled:', e?.message);
+    return NextResponse.json({ error: 'Unable to load product' }, { status: 500 });
+  }
 }
+
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   // Update product - shop owner only
