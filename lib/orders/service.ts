@@ -2,6 +2,7 @@ import prisma from '@/lib/db/prisma';
 import { canTransition } from '@/lib/validation/schemas';
 import { releaseInventory, confirmInventoryDeduction } from '@/lib/inventory/manager';
 import { notificationService } from '@/lib/notifications/service';
+import { PERMISSIONS, ORDER_STATUS_PERMISSIONS, ROLE_PERMISSIONS, SHOP_ROLES, validateShopAccess } from '@/lib/auth/permissions';
 
 export interface OrderTransitionResult {
   success: boolean;
@@ -108,10 +109,14 @@ export async function transitionOrder(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Update order status
+      // Update order status - and mark QR used when COMPLETED per point 37
+      const updateData: any = { status: targetState };
+      if (targetState === 'COMPLETED') {
+        updateData.qrUsed = true;
+      }
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
-        data: { status: targetState }
+        data: updateData
       });
 
       // Create status history
