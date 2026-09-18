@@ -276,7 +276,9 @@ model Product {
   minOrderQty       Int      @default(1)
   maxOrderQty       Int?
   lowStockThreshold Int      @default(10)
-  isActive          Boolean  @default(true)
+  // Product lifecycle DRAFT→REVIEW→ACTIVE→ARCHIVED per point 13
+  productStatus     String   @default("ACTIVE") // DRAFT, REVIEW, ACTIVE, ARCHIVED
+  isActive          Boolean  @default(true) // Deprecated, use productStatus but keep for compat
   searchableText    String?
   embedding         String?
   createdAt         DateTime @default(now())
@@ -295,7 +297,9 @@ model Product {
   @@index([name])
   @@index([masterProductId])
   @@index([isActive])
+  @@index([productStatus])
   @@index([shopId, isActive])
+  @@index([shopId, productStatus])
 }
 
 model ProductVariant {

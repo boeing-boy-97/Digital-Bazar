@@ -26,7 +26,7 @@ export async function findProducts(params: ProductListParams) {
     masterProductId
   } = params;
 
-  const where: any = { isActive: true };
+  const where: any = { isActive: true, productStatus: 'ACTIVE' };
   if (shopId) where.shopId = shopId;
   if (categoryId) where.categoryId = categoryId;
   if (masterProductId) where.masterProductId = masterProductId;
