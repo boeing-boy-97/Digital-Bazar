@@ -53,7 +53,7 @@ export default function OrdersPage() {
             <div>Loading...</div>
           ) : orders.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">📦</div>
+              <div className="empty-state-icon">Package</div>
               <div className="empty-state-title">No orders yet</div>
               <div className="empty-state-description">Your orders will appear here. Start shopping!</div>
               <Link href="/shops" className="btn btn-primary">Browse Shops</Link>

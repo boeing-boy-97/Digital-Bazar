@@ -69,7 +69,7 @@ export default function InventoryPage() {
             <span style={{ fontSize: 11, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 8px', borderRadius: 100, color: '#059669', fontWeight: 600 }}>Hygiene standards</span>
           </div>
         </div>
-        <div style={{ position: 'relative', minWidth: 240 }}>
+        <div style={{ position: 'relative', minWidth: 0 }}>
           <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
           <input className="form-input" placeholder="Search products or SKU" value={search} onChange={e=>setSearch(e.target.value)} style={{ paddingLeft: 32, borderRadius: 8, width: '100%' }} />
         </div>
